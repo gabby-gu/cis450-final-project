@@ -28,13 +28,9 @@ export default function HomePage() {
       .then(resJson => setSongOfTheDay(resJson));
 
     // TODO (TASK 14): add a fetch call to get the app author (name not pennkey) and store it in the state variable
-    fetch(`http://${config.server_host}:${config.server_port}/author/name`)
-      .then(res => res.text())
-      .then(resText => {
-        let authorArr = resText.split(" ");
-        console.log(authorArr[2]);
-        setAuthor(authorArr[2]+' '+authorArr[3]);
-      });
+    fetch(`http://${config.server_host}:${config.server_port}/home`)
+    .then(res => res.text())
+    .then(resText => setAuthor(resText));
   }, []);
 
   // Here, we define the columns of the "Top Songs" table. The songColumns variable is an array (in order)
@@ -44,19 +40,19 @@ export default function HomePage() {
   const songColumns = [
     {
       field: 'title',
-      headerName: 'Song Title',
+      headerName: 'Movie Title',
       renderCell: (row) => <Link onClick={() => setSelectedSongId(row.song_id)}>{row.title}</Link> // A Link component is used just for formatting purposes
     },
-    {
-      field: 'album',
-      headerName: 'Album',
-      renderCell: (row) => <NavLink to={`/albums/${row.album_id}`}>{row.album}</NavLink> // A NavLink component is used to create a link to the album page
-    },
-    {
-      field: 'plays',
-      headerName: 'Plays',
-      renderCell: (row) => <p>{row.plays}</p>
-    },
+    // {
+    //   field: 'album',
+    //   headerName: 'Album',
+    //   renderCell: (row) => <NavLink to={`/albums/${row.album_id}`}>{row.album}</NavLink> // A NavLink component is used to create a link to the album page
+    // },
+    // {
+    //   field: 'plays',
+    //   headerName: 'Plays',
+    //   renderCell: (row) => <p>{row.plays}</p>
+    // },
   ];
 
   // TODO (TASK 15): define the columns for the top albums (schema is Album Title, Plays), where Album Title is a link to the album page
@@ -82,16 +78,16 @@ export default function HomePage() {
         <Link onClick={() => setSelectedSongId(songOfTheDay.song_id)}>{songOfTheDay.title}</Link>
       </h2>
       <Divider />
-      <h2>Top Songs</h2>
-      <LazyTable route={`http://${config.server_host}:${config.server_port}/top_songs`} columns={songColumns} />
+      <h2>Random Movies</h2>
+      <LazyTable route={`http://${config.server_host}:${config.server_port}/home`} columns={songColumns} />
       <Divider />
       {/* TODO (TASK 16): add a h2 heading, LazyTable, and divider for top albums. Set the LazyTable's props for defaultPageSize to 5 and rowsPerPageOptions to [5, 10] */}
       <Divider />
-      <h2>Top Albums</h2>
-      <LazyTable route={`http://${config.server_host}:${config.server_port}/top_albums`} columns={albumColumns} defaultPageSize = {5} rowsPerPageOptions = {[5, 10]} />
+      {/* <h2>Top Albums</h2>
+      <LazyTable route={`http://${config.server_host}:${config.server_port}/top_albums`} columns={albumColumns} defaultPageSize = {5} rowsPerPageOptions = {[5, 10]} /> */}
       <Divider />
       {/* TODO (TASK 17): add a paragraph (<p>text</p>) that displays the value of your author state variable from TASK 13 */}
-      <p> {author} </p>
+      <p> {} </p>
     </Container>
   );
 };
