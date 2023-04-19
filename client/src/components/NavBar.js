@@ -36,7 +36,7 @@ export default function NavBar() {
     <AppBar position='static'>
       <Container maxWidth='xl'>
         <Toolbar disableGutters>
-          <NavText href='/' text='SWIFTIFY' isMain />
+          <NavText href='/' text='Cinescore' isMain />
           <NavText href='/albums' text='ALBUMS' />
           <NavText href='/songs' text='SONGS' />
         </Toolbar>

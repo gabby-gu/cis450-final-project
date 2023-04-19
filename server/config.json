@@ -1,9 +1,9 @@
 {
-  "rds_host": "database-2.cfhx1jrzns3r.us-east-1.rds.amazonaws.com",
+  "rds_host": "cis550-final-project-panchel.crmkt4v2icru.us-east-1.rds.amazonaws.com",
   "rds_port": "3306",
-  "rds_user": "admin",
-  "rds_password" : "wemustlove",
-  "rds_db": "SWIFTIFY",
+  "rds_user": "panchel550",
+  "rds_password" : "CIS550ChelseaAlexGabbySebin",
+  "rds_db": "CIS550",
   "server_host": "localhost",
   "server_port":"8080"
 }
