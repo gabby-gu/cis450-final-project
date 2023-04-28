@@ -80,7 +80,69 @@ const movie = async function(req, res) {
   });
 }
 
+//GET movie/username
+//MOVIE PAGE : get movie based on the username
+const movieByUser = async function(req, res) {
+  /*
+Route: GET /movie/:reviewer_id
+Description: return selected reviewer’s reviewed movies and average rating
+Route Parameter(s): reviewer_id(string)
+Query Parameter(s): reviewer_id(string)
+Route Handler: author(req, res)
+Return Type: JSON
+Expected (Output) behavior: Return the JSON formatted movie information 
+of the reviewed movie lists and the average rating(Query #4)
+  */
+  const username = req.params.username;
+  connection.query(`
+  SELECT *
+  FROM Ratings 
+  JOIN Movies using (movie_id)
+  WHERE user_id = '${username}'
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
+// GET /user/:user_id
+//user PAGE : get movie based on user_id
+const user = async function(req, res) {
+  /*
+Route: GET /user/:user_id
+Description: show the user information with given user_id
+Route Parameter(s): user_id(String)
+Query Parameter(s): user_id(String)
+Route Handler: author(req, res)
+Return Type: JSON
+Expected (Output) behavior: Return all the user information(Query #1) , 
+reviews that the user wrote, and the avg score of all the reviews 
+that the user gave(Query #2) 
+  */
+  const username = req.params.username;
+  connection.query(`
+  SELECT U.num_reviews, U.username, avg(rating_val)
+  FROM Users U
+  JOIN Ratings R on R.user_id = U.username
+  WHERE username = '${username}'
+  GROUP BY U.username
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
 module.exports = {
   home,
-  movie
+  movie,
+  movieByUser,
+  user
 }
