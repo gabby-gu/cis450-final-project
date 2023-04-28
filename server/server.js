@@ -12,7 +12,7 @@ app.use(cors({
 // provide their handlers that we implemented in routes.js
 app.get('/home', routes.home);
 app.get('/movie/:movie_id', routes.movie);
-app.get('/movie/:username', routes.movie);
+app.get('/movie/:username', routes.movieByUser);
 app.get('/users/:username', routes.user);
 // app.get('/album/:album_id', routes.album);
 // app.get('/albums', routes.albums);

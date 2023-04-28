@@ -51,6 +51,53 @@ const home = async function(req, res) {
   });
 }
 
+//GET home/:type
+//Home: return movies matching the search parameter
+const search = async function(req, res) {
+  /*
+  Description: look up movie title and summary based on the inputted keyword and return movie information
+  Route Parameter(s): type(string)
+  Query Parameter(s): type(string)
+  Route Handler: author(req, res)
+  Return Type: JSON
+  Expected (Output) behavior:
+  ● Case 1: If the route parameter (type)=’keyword’’
+  ○ Return the JSON formatted movie information that has a matching title or summary with inputted keyword
+  ● Case 2: If the route parameter(type)= ‘date’
+  ○ Return the JSON formatted movie information that has a matching release date 
+  ● Case 3: If the route parameter(type)= ‘tag’
+  ○ Return Return the JSON formatted movie information that has a matching tag using Query #3
+  ● Case 4: If the route parameter is defined but does not match cases 1 or 2 or 3:
+  ○ Return “‘[type]’ is not a valid author type.
+  */
+  const keyword = req.query.keyword ?? '';
+
+  // TODO: have to think about how to incorporate this parameters to query
+  const date = req.query.date ?? 0; // add query parameter for this 
+  const tag = req.query.tag ?? ''; // add query parameter for this
+
+  var keywordLower = keyword.toLowerCase();
+  var keywordCaptalized = keywordLower.charAt(0).toUpperCase() + keywordLower.slice(1);
+
+  connection.query(`
+  SELECT *
+  FROM Movies
+  JOIN Movie_tags ON (movieId)
+  WHERE title LIKE '%${keywordLower}%' OR  title LIKE '%${keywordCaptalized}%'
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else if ((keyword == '' & date == '0' & tag == '')) {
+      console.log("invalid search parameter")
+      res.json({}); //will have to fix this later
+    } 
+    else {
+      res.json(data);
+    }
+  });
+}
+
 
 //GET movie/movie_id
 //MOVIE PAGE : get movie based on ID
@@ -62,7 +109,8 @@ const movie = async function(req, res) {
   Query Parameter(s): None
   Route Handler: author(req, res)
   Return Type: JSON
-  Expected (Output) behavior: Return the JSON formatted movie information of the given movie_id(Query #7) and all the reviews from letterboxd for that movie(Query #9)
+  Expected (Output) behavior: Return the JSON formatted movie information of the given movie_id(Query #7)
+   and all the reviews from letterboxd for that movie(Query #9)
   */
   const movie_id = req.params.movie_id;
   connection.query(`
@@ -142,6 +190,7 @@ that the user gave(Query #2)
 
 module.exports = {
   home,
+  search,
   movie,
   movieByUser,
   user
