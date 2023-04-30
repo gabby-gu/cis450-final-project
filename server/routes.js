@@ -38,8 +38,8 @@ const home = async function(req, res) {
   "Family", "Mystery"];
 
   let ind = tags[Math.floor(Math.random() * tags.length)];
-  var stdDate = today.setFullYear( today.getFullYear() - 3 );
-  var stdDateMonthBefore = stdDate.setMonth( today.getMonth() - 1);
+  var stdDate = today.setFullYear( today.getFullYear() - 2 );
+  var stdDateYearBefore = today.setFullYear( today.getFullYear() - 3 );
 
   // Here is a complete example of how to query the database in JavaScript.
   // Only a small change (unrelated to querying) is required for TASK 3 in this route.
@@ -60,7 +60,7 @@ const home = async function(req, res) {
 
     const defaultQuery = ` 
     SELECT *
-    FROM Tags_movielens
+    FROM Tags_Movielens
     JOIN (SELECT movie_id, avg(rating_val) as rating
         FROM Ratings_movielens
         group by movie_id) rml using (movie_id)
@@ -73,7 +73,7 @@ const home = async function(req, res) {
     (SELECT *, avg(rating_val) as avg
     FROM (SELECT * FROM Movies_letterboxd 
           WHERE release_date < '%${stdDate}%' 
-          AND release_date > '%${stdDateMonthBefore}%') mv
+          AND release_date > '%${stdDateYearBefore}%') mv
     JOIN Ratings_letterboxd using (movie_id)
     GROUP BY movie_id)
     SELECT movie_id, title, image_url, avg
