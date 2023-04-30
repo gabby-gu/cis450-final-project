@@ -14,11 +14,13 @@ connection.connect((err) => err && console.log(err));
 
 const today = new Date();
 function timeConverter(timestamp) {
-  var a = timestamp * 1000; //date: unix timestamp
+  var a = new Date(timestamp); //date: unix timestamp
+  // console.log("a: ", a);
   var year = a.getFullYear();
   var month = a.getMonth();
   var date = a.getDate();
   var time = year + '-' + month + '-' + date;
+  // console.log("time: ", time);
   return time;
 }
 
@@ -124,22 +126,6 @@ const search = async function(req, res) {
   const date_upper = timeConverter(timestamp_upper);
   const date_lower = timeConverter(timestamp_lower);
 
-  // var case1 = `
-  //   SELECT *
-  //   FROM letterboxd_movie_v2 lm, movies_metadata md
-  //   WHERE lm.movie_title LIKE "%keyword%" OR lm.overview LIKE "%keyword%" OR md.original_title LIKE "%keyword%" OR md.overview LIKE "%keyword%";
-  //   ` 
-  // var case2 = `
-  //   SELECT * 
-  //   FROM letterboxd_movie_v2 lm, movies_metadata md 
-  //   WHERE lm.release_date LIKE 'date' OR md.release_date LIKE 'date'
-  //   `
-  // var case3 = `
-  //   SELECT * 
-  //   FROM movies_metadata md JOIN movielens_genres g ON md.id = g.movie_id
-  //   WHERE g.tag LIKE 'tag'
-  // `
-
   const inputQuery = `
   WITH combined as (
     SELECT movie_id, title, image_url, release_date, priority, type FROM
@@ -176,7 +162,7 @@ const search = async function(req, res) {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
-    } else if ((keyword == '' & date == '0' & tag == '')) {
+    } else if ((keyword == '' & date_lower > date_upper & tag == '')) {
       console.log("invalid search parameter")
       res.json({}); //will have to fix this later
     } 
