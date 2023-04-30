@@ -330,6 +330,28 @@ that the user gave(Query #2)
   conn = require('bluebird').promisifyAll(connection)
   const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
+  // Multiple queries for Homepage
+  // TODO: Change
+  Promise.all([
+    conn.queryAsync(defaultQuery),
+    conn.queryAsync(sortReleaseDateQuery),
+    conn.queryAsync(mostReviewsQuery)
+  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults]
+  ) {
+    const results = {
+      default: organize(defaultResults),
+      sortRelease: organize(sortReleaseResults),
+      mostReviews: organize(mostReviewsResults)
+    };
+    console.log("--------------------");
+    console.log(results);
+    res.json(results);
+  }, function(err) {
+    console.log(err);
+    res.json({});
+  });
+
+  // Multiple queries for User Page
   Promise.all([
     conn.queryAsync(userInfoQuery),
     conn.queryAsync(overAvgQuery),
