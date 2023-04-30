@@ -211,6 +211,7 @@ const movie = async function(req, res) {
   var table = ''
   var avgTable = ''
   var id = movie_id.slice(1);
+  var movieinfoQuery = '';
 
   if (movie_id[0] == 'm'){
     table = 'Movies_movielens';
@@ -223,21 +224,46 @@ const movie = async function(req, res) {
     console.log('Movie id in wrong format. Specify which table the movie is from.');
   }
 
-  const movieInfoQuery = ` 
+  const mlQuery = ` 
   SELECT *
   FROM (SELECT * FROM ${table}
   WHERE movie_id = ${id} LIMIT 1) ml
-  JOIN (SELECT movie_id, avg(rating_val) as avg_rating
+  JOIN
+      (SELECT ${id} as movie_id, COALESCE(
+      (SELECT avg(rating_val) as avg_rating
       FROM ${avgTable}
       WHERE movie_id = ${id}
-      GROUP BY movie_id) rt using (movie_id)
+      GROUP BY movie_id),-1) as avg_rating) rt using (movie_id)
   `;
+
+  const lbQuery = ` 
+  SELECT *
+  FROM (SELECT * FROM ${table}
+  WHERE movie_id = '${id}' LIMIT 1) ml
+  JOIN
+  (SELECT '${id}' as movie_id, COALESCE(
+  (SELECT avg(rating_val) as avg_rating
+  FROM ${avgTable}
+  WHERE movie_id = '${id}'
+  GROUP BY movie_id),-1) as avg_rating) rt using (movie_id)
+  `;
+
+  if (movie_id[0] == 'm'){
+    movieinfoQuery = mlQuery;
+  } else if (movie_id[0] == 'l') {
+    movieinfoQuery = lbQuery;
+  } else {
+    console.log('Movie id in wrong format. Specify which table the movie is from.');
+  }
   
-  connection.query(movieInfoQuery, (err, data) => {
+  connection.query(movieinfoQuery, (err, data) => {
     if (err || data.length === 0) {
+      console.log(movieinfoQuery);
       console.log(err);
       res.json({});
-    } else {
+    } 
+    else {
+      console.log(movieinfoQuery);
       console.log(data);
       res.json(data);
     }
@@ -269,7 +295,7 @@ that the user gave(Query #2)
   GROUP BY U.username, num_reviews
   `;
 
-  // complex query: randomly retrieve movies greater than avg rating
+  // complex query: randomly retrieve movies greater than user's avg rating
   const overAvgQuery = ` 
   WITH getAvgRating AS (SELECT U.username, num_reviews, AVG(rating_val) AS avg_score
   FROM Users U JOIN Ratings_letterboxd Rl on U.username = Rl.user_id
@@ -285,6 +311,7 @@ that the user gave(Query #2)
   LIMIT 3
   `;
 
+  // return avg rating for each tag from letterbox data + return one top rated movie for each tag
   const perTagQuery = ` 
   WITH info AS (SELECT tag, avg(rating_val) as avgpertag, max(rating_val) as maxpertag, Rl.movie_id
   FROM Users
