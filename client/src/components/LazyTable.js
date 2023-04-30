@@ -19,7 +19,7 @@ export default function LazyTable({ route, columns, defaultPageSize, rowsPerPage
   // need to re-fetch the data if any of these values change
   useEffect(() => {
     fetch(`${route}?page=${page}&page_size=${pageSize}`)
-      .then(res => res.json())
+      .then(res => res.j`son`())
       .then(resJson => setData(resJson));
   }, [route, page, pageSize]);
 

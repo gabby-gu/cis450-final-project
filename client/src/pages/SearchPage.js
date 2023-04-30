@@ -6,7 +6,7 @@ import SongCard from '../components/SongCard';
 import { formatDuration } from '../helpers/formatter';
 const config = require('../config.json');
 
-export default function SongsPage() {
+export default function SearchPage() {
   const [pageSize, setPageSize] = useState(10);
   const [data, setData] = useState([]);
   const [selectedSongId, setSelectedSongId] = useState(null);
