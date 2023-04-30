@@ -14,11 +14,13 @@ connection.connect((err) => err && console.log(err));
 
 const today = new Date();
 function timeConverter(timestamp) {
-  var a = timestamp * 1000; //date: unix timestamp
+  var a = new Date(timestamp); //date: unix timestamp
+  // console.log("a: ", a);
   var year = a.getFullYear();
   var month = a.getMonth();
   var date = a.getDate();
   var time = year + '-' + month + '-' + date;
+  // console.log("time: ", time);
   return time;
 }
 
@@ -174,7 +176,7 @@ const search = async function(req, res) {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
-    } else if ((keyword == '' & date == '0' & tag == '')) {
+    } else if ((keyword == '' & date_lower > date_upper & tag == '')) {
       console.log("invalid search parameter")
       res.json({}); //will have to fix this later
     } 
