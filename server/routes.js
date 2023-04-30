@@ -37,6 +37,7 @@ const home = async function(req, res) {
 
   let ind = tags[Math.floor(Math.random() * tags.length)];
   var stdDate = today.setFullYear( today.getFullYear() - 3 );
+  var stdDateMonthBefore = stdDate.setMonth( today.getMonth() - 1);
 
   // Here is a complete example of how to query the database in JavaScript.
   // Only a small change (unrelated to querying) is required for TASK 3 in this route.
@@ -57,15 +58,28 @@ const home = async function(req, res) {
 
     const defaultQuery = ` 
     SELECT *
-    FROM Movie_tags
+    FROM Tags_movielens
     JOIN (SELECT movie_id, avg(rating_val) as rating
         FROM Ratings_movielens
         group by movie_id) rml using (movie_id)
     WHERE tag LIKE '%${ind}%'
     ORDER BY rating
-    LIMIT 10`;
+    LIMIT 5`;
 
-    const sortReleasDateQuery = ` 
+    const sortReleaseDateQuery = ` 
+    with movies as
+    (SELECT *, avg(rating_val) as avg
+    FROM (SELECT * FROM Movies_letterboxd 
+          WHERE release_date < '%${stdDate}%' 
+          AND release_date > '%${stdDateMonthBefore}%') mv
+    JOIN Ratings_letterboxd using (movie_id)
+    GROUP BY movie_id)
+    SELECT movie_id, title, image_url, avg
+    FROM movies
+    ORDER BY avg
+    LIMIT 5`;
+
+    const mostReviewsQuery = ` 
     SELECT *
     FROM
       (SELECT *
@@ -75,7 +89,7 @@ const home = async function(req, res) {
       FROM Movie_letterboxd) as allmovies
     WHERE release_date < '%${stdDate}%'
     ORDER BY release_date
-    LIMIT 10`;
+    LIMIT 5`;
 
 
   connection.query(defaultQuery, (err, data) => {
@@ -124,22 +138,6 @@ const search = async function(req, res) {
   const date_upper = timeConverter(timestamp_upper);
   const date_lower = timeConverter(timestamp_lower);
 
-  // var case1 = `
-  //   SELECT *
-  //   FROM letterboxd_movie_v2 lm, movies_metadata md
-  //   WHERE lm.movie_title LIKE "%keyword%" OR lm.overview LIKE "%keyword%" OR md.original_title LIKE "%keyword%" OR md.overview LIKE "%keyword%";
-  //   ` 
-  // var case2 = `
-  //   SELECT * 
-  //   FROM letterboxd_movie_v2 lm, movies_metadata md 
-  //   WHERE lm.release_date LIKE 'date' OR md.release_date LIKE 'date'
-  //   `
-  // var case3 = `
-  //   SELECT * 
-  //   FROM movies_metadata md JOIN movielens_genres g ON md.id = g.movie_id
-  //   WHERE g.tag LIKE 'tag'
-  // `
-
   const inputQuery = `
   WITH combined as (
     SELECT movie_id, title, image_url, release_date, priority, type FROM
@@ -150,7 +148,7 @@ const search = async function(req, res) {
         SELECT *, 1 as priority
         FROM Movies_letterboxd
         WHERE overview LIKE '% ${keyword} %') as mvlb
-    JOIN (SELECT movie_id, tag FROM Letterboxd_tags) LBT USING (movie_id)
+    JOIN (SELECT movie_id, tag FROM Tags_letterboxd) LBT USING (movie_id)
         WHERE tag LIKE '%${tag}%'
     UNION ALL
     SELECT movie_id, title, image_url, release_date, priority, type from
@@ -162,7 +160,7 @@ const search = async function(req, res) {
             SELECT *, 1 as priority
             FROM Movies_movielens
             WHERE overview LIKE '% ${keyword} %') as mvml
-        JOIN (SELECT movie_id, tag FROM Movie_tags) MT USING (movie_id)
+      JOIN (SELECT movie_id, tag FROM Tags_movielens) MT USING (movie_id)
         WHERE tag LIKE '%${tag}%') ml
     )
     SELECT movie_id, title, image_url, release_date, type
@@ -285,43 +283,34 @@ that the user gave(Query #2)
   LIMIT 3
   `;
 
-  const reviewedMoviesQuery = ` 
-  SELECT movie_id, title, rating_val
+  const perTagQuery = ` 
+  WITH info AS (SELECT tag, avg(rating_val) as avgpertag, max(rating_val) as maxpertag, Rl.movie_id
   FROM Users
-  JOIN (SELECT * FROM Ratings_letterboxd WHERE user_id = '${username}') Rl on Users.username = Rl.user_id
-  JOIN (Movies_letterboxd) using (movie_id)
-  ORDER BY rating_val desc
-  LIMIT 10
+  JOIN (SELECT *
+        FROM Ratings_letterboxd
+        WHERE user_id = '${username}') Rl on Users.username = Rl.user_id
+  JOIN Tags_Letterboxd TL on Rl.movie_id = TL.movie_id
+  GROUP BY tag)
+  SELECT tag, avgpertag, maxpertag, info.movie_id, title
+  FROM info
+  JOIN Movies_letterboxd USING (movie_id)
   `;
 
   // Use promise to return results from multiple queries
   // https://stackoverflow.com/questions/68804781/how-to-create-multiple-queries-in-a-single-get-request
-  /*connection.query(`
-  SELECT U.username, num_reviews, AVG(rating_val) AS avg_score
-  FROM Users U JOIN Ratings_letterboxd Rl on U.username = Rl.user_id
-  WHERE = 'input'
-  GROUP BY U.username, num_reviews
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });*/
   conn = require('bluebird').promisifyAll(connection)
   const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
   Promise.all([
     conn.queryAsync(userInfoQuery),
     conn.queryAsync(overAvgQuery),
-    conn.queryAsync(reviewedMoviesQuery)
-  ]).then(function([userInfoResults, overAvgResults, reviewedMoviesResults]
+    conn.queryAsync(perTagQuery)
+  ]).then(function([userInfoResults, overAvgResults, perTagResults]
   ) {
     const results = {
       userInfo: organize(userInfoResults),
       overAvg: organize(overAvgResults),
-      reviewedMovies: organize(reviewedMoviesResults)
+      perTagMovies: organize(perTagResults)
     };
     console.log("--------------------");
     console.log(results);
