@@ -12,7 +12,7 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
-const today = Date.now();
+const today = new Date();
 function timeConverter(timestamp) {
   var a = timestamp * 1000; //date: unix timestamp
   var year = a.getFullYear();
@@ -36,7 +36,7 @@ const home = async function(req, res) {
   "Family", "Mystery"];
 
   let ind = tags[Math.floor(Math.random() * tags.length)];
-  let stdDate = today.setFullYear( today.getFullYear() - 3 );
+  var stdDate = today.setFullYear( today.getFullYear() - 3 );
 
   // Here is a complete example of how to query the database in JavaScript.
   // Only a small change (unrelated to querying) is required for TASK 3 in this route.
@@ -208,11 +208,14 @@ const movie = async function(req, res) {
   // Letterboxd movie_id: string
   // MovieLens movid_id: int
 
-  const table = ''
-  const avgTable = ''
+  var table = ''
+  var avgTable = ''
+  var id = movie_id.slice(1);
+
   if (movie_id[0] == 'm'){
     table = 'Movies_movielens';
     avgTable = 'Ratings_movielens';
+    id = parseInt(id);
   } else if (movie_id[0] == 'l') {
     table = 'Movies_letterboxd';
     avgTable = 'Ratings_letterboxd';
@@ -222,11 +225,11 @@ const movie = async function(req, res) {
 
   const movieInfoQuery = ` 
   SELECT *
-  FROM (SELECT * FROM '${table}'
-  WHERE movie_id = '${movie_id}' LIMIT 1) ml
+  FROM (SELECT * FROM ${table}
+  WHERE movie_id = ${id} LIMIT 1) ml
   JOIN (SELECT movie_id, avg(rating_val) as avg_rating
-      FROM '${avgTable}'
-      WHERE movie_id = '${movie_id}'
+      FROM ${avgTable}
+      WHERE movie_id = ${id}
       GROUP BY movie_id) rt using (movie_id)
   `;
   
@@ -235,6 +238,7 @@ const movie = async function(req, res) {
       console.log(err);
       res.json({});
     } else {
+      console.log(data);
       res.json(data);
     }
   });
@@ -292,7 +296,7 @@ that the user gave(Query #2)
 
   // Use promise to return results from multiple queries
   // https://stackoverflow.com/questions/68804781/how-to-create-multiple-queries-in-a-single-get-request
-  connection.query(`
+  /*connection.query(`
   SELECT U.username, num_reviews, AVG(rating_val) AS avg_score
   FROM Users U JOIN Ratings_letterboxd Rl on U.username = Rl.user_id
   WHERE = 'input'
@@ -304,13 +308,34 @@ that the user gave(Query #2)
     } else {
       res.json(data);
     }
+  });*/
+  conn = require('bluebird').promisifyAll(connection)
+  const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
+
+  Promise.all([
+    conn.queryAsync(userInfoQuery),
+    conn.queryAsync(overAvgQuery),
+    conn.queryAsync(reviewedMoviesQuery)
+  ]).then(function([userInfoResults, overAvgResults, reviewedMoviesResults]
+  ) {
+    const results = {
+      userInfo: organize(userInfoResults),
+      overAvg: organize(overAvgResults),
+      reviewedMovies: organize(reviewedMoviesResults)
+    };
+    console.log("--------------------");
+    console.log(results);
+    res.json(results);
+  }, function(err) {
+    console.log(err);
+    res.json({});
   });
+    
 }
 
 module.exports = {
   home,
   search,
   movie,
-  movieByUser,
   user
 }
