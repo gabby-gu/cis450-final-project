@@ -24,7 +24,7 @@ app.get('/user/:username', routes.user);
 // app.get('/search_songs', routes.search_songs);
 
 app.listen(config.server_port, () => {
-  console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
+  console.log(`Server running at http://${config.server_host}:${config.server_port}`)
 });
 
 module.exports = app;
