@@ -230,6 +230,7 @@ const movie = async function(req, res) {
   // MovieLens movid_id: int
 
   var table = ''
+  var ratingTable = ''
   var avgTable = ''
   var id = movie_id.slice(1);
   var movieinfoQuery = '';
@@ -237,10 +238,12 @@ const movie = async function(req, res) {
 
   if (movie_id[0] == 'm'){
     table = 'Movies_movielens';
+    ratingTable = 'Ratings_movielens'
     avgTable = 'Ratings_movielens';
     id = parseInt(id);
   } else if (movie_id[0] == 'l') {
     table = 'Movies_letterboxd';
+    ratingTable = 'Ratings_letterboxd';
     avgTable = 'Ratings_letterboxd';
   } else {
     console.log('Movie id in wrong format. Specify which table the movie is from.');
@@ -272,14 +275,14 @@ const movie = async function(req, res) {
 
   const mlUsers = `
   SELECT user_id, rating_val
-  FROM ${table}
+  FROM ${ratingTable}
   WHERE movie_id = ${id}
   ORDER BY rating_val DESC
   LIMIT 20`;
 
   const lbUsers = `
   SELECT user_id, rating_val
-  FROM ${table}
+  FROM ${ratingTable}
   WHERE movie_id = '${id}'
   ORDER BY rating_val DESC
   LIMIT 20`;
