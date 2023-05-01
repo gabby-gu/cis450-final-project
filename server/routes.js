@@ -93,19 +93,46 @@ const home = async function(req, res) {
   ORDER BY release_date
   LIMIT 5`;
 
+  const threeUsersThreeGenresQuery = `
+  WITH randReviewers AS (
+    SELECT *
+    FROM (SELECT username FROM Users
+    ORDER BY num_reviews DESC LIMIT 50) top
+     ORDER BY RAND()
+     LIMIT 3
+  ),
+  MovieAndTags AS (
+      SELECT tag, rating_val, user_id
+      FROM Tags_Letterboxd TL
+      JOIN Ratings_letterboxd RL ON TL.movie_id = RL.movie_id
+      JOIN randReviewers RV on RV.username = RL.user_id
+  ),
+  combined AS (
+  SELECT user_id, tag, AVG(rating_val) AS avg_rating_of_genre
+  FROM MovieAndTags M
+  GROUP BY user_id, tag)
+  SELECT *
+  FROM combined c
+  WHERE (SELECT count(*)
+          FROM combined
+          WHERE avg_rating_of_genre > c.avg_rating_of_genre
+            AND c.user_id = user_id) < 3`;
+
   
   // Multiple queries for Homepage
   // TODO: Change
   Promise.all([
     conn.queryAsync(defaultQuery),
     conn.queryAsync(sortReleaseDateQuery),
-    conn.queryAsync(mostReviewsQuery)
-  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults]
+    conn.queryAsync(mostReviewsQuery),
+    conn.queryAsync(threeUsersThreeGenresQuery),
+  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults, threeUsersThreeGenresResults]
   ) {
     const results = {
       default: organize(defaultResults),
       sortRelease: organize(sortReleaseResults),
-      mostReviews: organize(mostReviewsResults)
+      mostReviews: organize(mostReviewsResults),
+      threeUsersThreeGenres: organize(threeUsersThreeGenresResults)
     };
     console.log("--------------------");
     console.log(results);
