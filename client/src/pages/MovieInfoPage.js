@@ -1,85 +1,71 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Link, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Container } from '@mui/material';
 
-import SongCard from '../components/SongCard';
-import { formatDuration, formatReleaseDate } from '../helpers/formatter';
+import { formatReleaseDate } from '../helpers/formatter';
 const config = require('../config.json');
 
 export default function MovieInfoPage() {
-  const { movie_id } = useParams();
+  const { movie_id } = useParams();
 
-  const [songData, setSongData] = useState([{}]); // default should actually just be [], but empty object element added to avoid error in template code
-  const [movieData, setmovieData] = useState([]);
+  const [movieData, setmovieData] = useState({});
+  const [posterUrl, setPosterUrl] = useState('');
+  const [userList, setUserList] = useState([]);
 
-  const [selectedSongId, setSelectedSongId] = useState(null);
+  useEffect(() => {
+    fetch(`http://${config.server_host}:${config.server_port}/movie/${movie_id}`)
+      .then(res => res.json())
+      .then(resJson => {
+        console.log(resJson);
+        setmovieData(resJson.movieInfoResults[0]);
+        setUserList(resJson.userList);
+        const imdb_id = resJson.movieInfoResults[0].imdb_id;
+        const api_key = 'afeb2e4f';
+        const url = `http://www.omdbapi.com/?apikey=${api_key}&i=${imdb_id}`;
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            const posterUrl = data.Poster;
+            console.log(posterUrl); // this should output the poster URL
+            setPosterUrl(posterUrl);
+          })
+          .catch(error => console.error(error));
+      })
+      .catch(error => console.error(error));
+  }, [movie_id]);
 
-  useEffect(() => {
-    fetch(`http://${config.server_host}:${config.server_port}/movie/${movie_id}`)
-      .then(res => res.json())
-      .then(resJson => setmovieData(resJson));
-
-    fetch(`http://${config.server_host}:${config.server_port}/album_songs/${movie_id}`)
-      .then(res => res.json())
-      .then(resJson => setSongData(resJson));
-  }, [movie_id]);
-
-  return (
-    <p> Hello </p>
-    // <Container>
-    //   {selectedSongId && <SongCard songId={selectedSongId} handleClose={() => setSelectedSongId(null)} />}
-    //   <Stack direction='row' justify='center'>
-    //     <img
-    //       key={movieData.movie_id}
-    //       src={movieData.thumbnail_url}
-    //       alt={`${movieData.title} album art`}
-    //       style={{
-    //         marginTop: '40px',
-    //         marginRight: '40px',
-    //         marginBottom: '40px'
-    //       }}
-    //     />
-    //     <Stack>
-    //       <h1 style={{ fontSize: 64 }}>{movieData.title}</h1>
-    //       <h2>Released: {formatReleaseDate(movieData.release_date)}</h2>
-    //     </Stack>
-    //   </Stack>
-    //   <TableContainer>
-    //     <Table>
-    //       <TableHead>
-    //         <TableRow>
-    //           <TableCell key='#'>#</TableCell>
-    //           <TableCell key='Title'>Title</TableCell>
-    //           <TableCell key='Plays'>Plays</TableCell>
-    //           <TableCell key='Duration'>Duration</TableCell>
-    //         </TableRow>
-    //       </TableHead>
-    //       <TableBody>
-    //         {
-    //           // TODO (TASK 23): render the table content by mapping the songData array to <TableRow> elements
-    //           // Hint: the skeleton code for the very first row is provided for you. Fill out the missing information and then use a map function to render the rest of the rows.
-    //           // Hint: it may be useful to refer back to LazyTable.js
-    //         songData.map((row, idx) =>
-    //         <TableRow key = {row.song_id}>
-
-    //             <TableCell key='#'>{songData[idx].number}</TableCell>
-    //             <TableCell key='Title'>
-    //               <Link onClick={() => setSelectedSongId(songData[idx].song_id)}>
-    //                 {songData[idx].title}
-    //               </Link>
-    //             </TableCell>
-    //             <TableCell key='Plays'>{songData[idx].plays}</TableCell>
-    //             <TableCell key='Duration'>{formatDuration(songData[idx].duration)}</TableCell>
-                
-              
-
-    //         </TableRow>
-    //         )
-              
-    //         }
-    //       </TableBody>
-    //     </Table>
-    //   </TableContainer>
-    // </Container>
-  );
+  return (
+    <Container style={{ marginTop: '70px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ display: 'flex' }}>
+        {posterUrl && <img src={posterUrl} style={{ width: '40%', marginRight: '20px' }} />}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h1 style={{ fontFamily: 'Arial', fontSize: '40px', margin: 0, fontWeight: 'bold' }}>{movieData.title}</h1>
+          <p style={{ fontFamily: 'Arial', fontSize: '22px', margin: 0 }}>
+            <span style={{ fontWeight: 'bold', color: 'blue' }}>Release Year: </span>
+            {formatReleaseDate(movieData.release_date)}
+          </p>
+          <p style={{ fontFamily: 'Arial', fontSize: '22px', margin: 0 }}>
+            <span style={{ fontWeight: 'bold', color: 'blue' }}>Average Rating: </span>
+            {movieData.avg_rating}
+          </p>
+          <p style={{ fontFamily: 'Arial', fontSize: '22px', margin: 0 }}>
+            <span style={{ fontWeight: 'bold', color: 'blue' }}>Synopsis: </span>
+            {movieData.overview}
+          </p>
+        </div>
+      </div>
+      {userList.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <h2 style={{ fontFamily: 'Arial', fontSize: '28px', margin: 0 }}>Users:</h2>
+          <ul style={{ fontFamily: 'Arial', fontSize: '22px', margin: '10px 0 0 0', padding: 0 }}>
+            {userList.map(user => (
+              <li key={user.user_id}>
+                <a href={`/user/${user.user_id}`}>{user.user_id}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Container>
+  );
 }

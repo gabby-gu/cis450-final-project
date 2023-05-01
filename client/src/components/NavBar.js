@@ -11,14 +11,15 @@ const NavText = ({ href, text, isMain }) => {
       style={{
         marginRight: '30px',
         fontFamily: 'monospace',
-        fontWeight: 700,
-        letterSpacing: '.3rem',
+        color: 'black',
+        fontFamily: 'Helvetica',
+
       }}
     >
       <NavLink
         to={href}
         style={{
-          color: 'inherit',
+          color: 'black',
           textDecoration: 'none',
         }}
       >
@@ -33,10 +34,10 @@ const NavText = ({ href, text, isMain }) => {
 // props to how it changes the look of the component.
 export default function NavBar() {
   return (
-    <AppBar position='static'>
+    <AppBar position='static' style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
       <Container maxWidth='xl'>
         <Toolbar disableGutters>
-          <NavText href='/' text='Cinescore' isMain />
+          <NavText href='/' text='CineScore' isMain />
           <NavText href='/albums' text='Movies' />
           <NavText href='/songs' text='Users' />
         </Toolbar>

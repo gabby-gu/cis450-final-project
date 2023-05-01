@@ -7,14 +7,15 @@ import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
 import AlbumsPage from './pages/AlbumsPage';
 import SearchPage from './pages/SearchPage';
-import MovieInfoPage from './pages/MovieInfoPage'
+import MovieInfoPage from './pages/MovieInfoPage';
+import UserPage from './pages/UserPage';
 
 // createTheme enables you to customize the look and feel of your app past the default
 // in this case, we only change the color scheme
 export const theme = createTheme({
   palette: {
     primary: indigo,
-    secondary: amber,
+    secondary: indigo,
   },
 });
 
@@ -25,16 +26,18 @@ export const theme = createTheme({
 export default function App() {
   return (
     <ThemeProvider theme={theme}>
+      <div style = {{backgroundColor: "#22222e", fontFamily: "helvetica", color: "white"}}>
       <CssBaseline />
       <BrowserRouter>
         <NavBar />
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          // <Route path="/albums" element={<AlbumsPage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/movie/:movie_id" element={<MovieInfoPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/user/:user_id" element={<UserPage />} />
         </Routes>
       </BrowserRouter>
+      </div>
     </ThemeProvider>
   );
 }
