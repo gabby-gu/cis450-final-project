@@ -11,6 +11,8 @@ const connection = mysql.createConnection({
   database: config.rds_db
 });
 connection.connect((err) => err && console.log(err));
+conn = require('bluebird').promisifyAll(connection)
+const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
 const today = new Date();
 function timeConverter(timestamp) {
@@ -220,6 +222,22 @@ const search = async function(req, res) {
     LIMIT 20
   `;
 
+  const tagQuery = `
+  with allmovies as (
+    SELECT tag, COUNT(Ml.movie_id) as num_movies
+    FROM Tags_Letterboxd, Movies_letterboxd Ml
+    WHERE Tags_Letterboxd.movie_id = Ml.movie_id
+    GROUP BY (tag)
+    UNION ALL
+    SELECT tag, COUNT(Mm.movie_id) as num_movies
+    FROM Tags_Movielens, Movies_movielens Mm
+    WHERE Mm.movie_id = Tags_Movielens.movie_id
+    GROUP BY (tag))
+    select tag, sum(num_movies)
+    from allmovies
+    group by tag
+    `;
+
   connection.query(inputQuery, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -415,8 +433,6 @@ that the user gave(Query #2)
 
   // Use promise to return results from multiple queries
   // https://stackoverflow.com/questions/68804781/how-to-create-multiple-queries-in-a-single-get-request
-  conn = require('bluebird').promisifyAll(connection)
-  const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
   // Multiple queries for User Page
   Promise.all([
