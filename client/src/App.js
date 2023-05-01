@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { indigo, amber } from '@mui/material/colors'
 import { createTheme } from "@mui/material/styles";
+import "./fonts/Poppins-Regular.ttf";
+import "./fonts/Poppins-Light.ttf";
+import './App.css';
 
 import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';

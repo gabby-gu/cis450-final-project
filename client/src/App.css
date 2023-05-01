@@ -1,0 +1,17 @@
+@font-face {
+    font-family: "Poppins Regular";   /*Can be any text*/
+    src: local("Poppins"),
+      url("./fonts/Poppins-Light.ttf") format("truetype");
+}
+ 
+body {
+    font-family: "Poppins Regular";
+    margin: 0;
+    background-color: 'black';
+    height: 100%;
+
+}
+
+h1 {
+    font-family: "Poppins Regular";
+}

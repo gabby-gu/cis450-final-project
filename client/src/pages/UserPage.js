@@ -37,83 +37,68 @@ const Item = styled(Paper)(({ theme }) => ({
 export default function UserPage() {
   const { user_id } = useParams();
 
+  // check if user_id is all numbers
+  const isAllNumbers = /^\d+$/.test(user_id);
 
   const [userData, setUserData] = useState([{}]); 
   const [overAvg, setOverAvg] = useState([{}]); 
   const [perTagMovies, setPerTag] = useState([{}]); 
 
   useEffect(() => {
+    if (isAllNumbers) {
+      setUserData([]);
+      setOverAvg([]);
+      setPerTag([]);
+      return;
+    }
+
     fetch(`http://${config.server_host}:${config.server_port}/user/${user_id}`)
       .then(res => res.json())
       .then(resJson => {
         setUserData(resJson.userInfo);
         setOverAvg(resJson.overAvg);
         setPerTag(resJson.perTagMovies);
-
       });
-  }, [user_id]);
+  }, [user_id, isAllNumbers]);
   
-
-
-
+  if (isAllNumbers) {
+    return <div>ERROR!! This movie is from Movielens database and does not contain any user info!</div>;
+  }
+  
   return (
-
-        <center>
-        <Card sx={{ fontFamily: 'helvetica' , width: '60%', backgroundColor: '#white', color: 'black', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
-      
+    <center>
+      <Card sx={{ fontFamily: 'helvetica' , width: '60%', backgroundColor: '#white', color: 'black', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
         <CardContent>
-      
-        <Typography fontSize = {42} component="div">
-        
-        {userData[0].username}
-
-
-        </Typography>
-        <Typography variant="body2">
+          <Typography fontSize={42} component="div">
+            {userData[0].username}
+          </Typography>
+          <Typography variant="body2">
             Ratings Given:   {userData[0].num_reviews}<br/>
-
-
-        </Typography>
-      
-        <Typography variant="body2">
-        Average Rating Given:   {userData[0].avg_score}<br/>
-
-
-        Likes:
-          <Chip label="Action" />
-          
-          <Chip label="Comedy" />
-
-          <Chip label="Rom Com" />
-
-          <Chip label="Animation" />
-          
-          
-        </Typography>
-          
-
-        <Stack spacing={2}>
+          </Typography>
+          <Typography variant="body2">
+            Average Rating Given:   {userData[0].avg_score}<br/>
+            Likes:
+            <Chip label="Action" />
+            <Chip label="Comedy" />
+            <Chip label="Rom Com" />
+            <Chip label="Animation" />
+          </Typography>
+          <Stack spacing={2}>
             {overAvg.map(overAvg => (
-                <Item key={overAvg.movie_id}>{overAvg.title}</Item>
+              <Item key={overAvg.movie_id}>{overAvg.title}</Item>
             ))}
-        </Stack>
-
-        <Stack spacing={2}>
+          </Stack>
+          <Stack spacing={2}>
             {perTagMovies.map(perTagMovies => (
-                <Item key={perTagMovies.movie_id}>{perTagMovies.tag}: {perTagMovies.title}</Item>
+              <Item key={perTagMovies.movie_id}>{perTagMovies.tag}: {perTagMovies.title}</Item>
             ))}
-        </Stack>
-
-
-
+          </Stack>
     
         </CardContent>
       
     </Card>
        
-   
-        
-        
+    
 
 
     </center>
