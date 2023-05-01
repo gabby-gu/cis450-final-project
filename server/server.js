@@ -12,6 +12,7 @@ app.use(cors({
 // provide their handlers that we implemented in routes.js
 app.get('/home', routes.home);
 app.get('/search', routes.search);
+app.get('/search/result', routes.returnSearch);
 app.get('/movie/:movie_id', routes.movie);
 //app.get('/movie/:username', routes.movieByUser);
 app.get('/user/:username', routes.user);

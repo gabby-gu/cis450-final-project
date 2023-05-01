@@ -14,15 +14,19 @@ connection.connect((err) => err && console.log(err));
 conn = require('bluebird').promisifyAll(connection)
 const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
-const today = new Date();
 function timeConverter(timestamp) {
   var a = new Date(timestamp); //date: unix timestamp
   // console.log("a: ", a);
   var year = a.getFullYear();
   var month = a.getMonth();
+  if (month < 10) {
+    month = "0"+month;
+  }
   var date = a.getDate();
+  if (date < 10) {
+    date = "0"+date;
+  }
   var time = year + '-' + month + '-' + date;
-  // console.log("time: ", time);
   return time;
 }
 
@@ -39,26 +43,13 @@ const home = async function(req, res) {
   "Documentary", "Western", "War", "Comedy", "Romance", "TV Movie", "History", 
   "Family", "Mystery"];
 
+  const today = new Date();
   let ind = tags[Math.floor(Math.random() * tags.length)];
-  var stdDate = today.setFullYear( today.getFullYear() - 2 );
-  var stdDateYearBefore = today.setFullYear( today.getFullYear() - 3 );
+  var stdDate = timeConverter(today.setFullYear( today.getFullYear() - 2 ));
+  var stdDateYearBefore = timeConverter(today.setFullYear( today.getFullYear() - 1 ));
 
   // Here is a complete example of how to query the database in JavaScript.
   // Only a small change (unrelated to querying) is required for TASK 3 in this route.
- /* const defaultQuery = ` 
-  WITH slay AS (
-    SELECT tagID, T.tag AS tag1, movieID, MT.tag AS tag2, title
-    FROM Tags T, Movie_tags MT
-    WHERE T.tag = MT.tag
-    GROUP BY T.tag, MT.title
-    ORDER BY T.tag, MT.title),
-    boots AS (SELECT tagId
-            FROM slay
-            ORDER BY RAND()
-            LIMIT 3)
-    SELECT *
-    FROM slay s, boots b
-    WHERE b.tagId = s.tagId;`;*/
 
   const defaultQuery = ` 
   SELECT *
@@ -74,16 +65,15 @@ const home = async function(req, res) {
   with movies as
   (SELECT *, avg(rating_val) as avg
   FROM (SELECT * FROM Movies_letterboxd 
-        WHERE release_date < '%${stdDate}%' 
-        AND release_date > '%${stdDateYearBefore}%') mv
+        WHERE release_date LIKE '%${stdDate}%') mv
   JOIN Ratings_letterboxd using (movie_id)
   GROUP BY movie_id)
-  SELECT movie_id, title, image_url, avg
+  SELECT movie_id, title, image_url, avg, release_date
   FROM movies
-  ORDER BY avg
-  LIMIT 5`;
+  ORDER BY release_date, avg
+  LIMIT 3`;
 
-  const mostReviewsQuery = ` 
+  /*const mostReviewsQuery = ` 
   SELECT *
   FROM
     (SELECT *
@@ -93,7 +83,7 @@ const home = async function(req, res) {
     FROM Movie_letterboxd) as allmovies
   WHERE release_date < '%${stdDate}%'
   ORDER BY release_date
-  LIMIT 5`;
+  LIMIT 5`;*/
 
   const threeUsersThreeGenresQuery = `
   WITH randReviewers AS (
@@ -126,19 +116,23 @@ const home = async function(req, res) {
   Promise.all([
     conn.queryAsync(defaultQuery),
     conn.queryAsync(sortReleaseDateQuery),
-    conn.queryAsync(mostReviewsQuery),
+    //conn.queryAsync(mostReviewsQuery),
     conn.queryAsync(threeUsersThreeGenresQuery),
-  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults, threeUsersThreeGenresResults]
+  ]).then(function([defaultResults, sortReleaseResults, 
+    //mostReviewsResults, 
+    threeUsersThreeGenresResults]
   ) {
     const results = {
       default: organize(defaultResults),
       sortRelease: organize(sortReleaseResults),
-      mostReviews: organize(mostReviewsResults),
+      //mostReviews: organize(mostReviewsResults),
       threeUsersThreeGenres: organize(threeUsersThreeGenresResults)
     };
     console.log("--------------------");
     console.log(results);
+    console.log(stdDate);
     res.json(results);
+    console.log(sortReleaseDateQuery);
   }, function(err) {
     console.log(err);
     res.json({});
@@ -161,8 +155,49 @@ const home = async function(req, res) {
 }
 
 //GET home/search
-//Home: return movies matching the search parameter
+//Home: return tags that user can input for search
 const search = async function(req, res) {
+  /*
+  Description: look up movie title and summary based on the inputted keyword and return movie information
+  Route Parameter(s): 
+  Query Parameter(s): 
+  Route Handler: author(req, res)
+  Return Type: JSON
+  Expected (Output) behavior: Return all the tags in a descending order
+  of number of reviews each tag have
+  */
+
+  const inputQuery = `
+  with allmovies as (
+    SELECT tag, COUNT(Ml.movie_id) as num_movies
+    FROM Tags_Letterboxd, Movies_letterboxd Ml
+    WHERE Tags_Letterboxd.movie_id = Ml.movie_id
+    GROUP BY (tag)
+    UNION ALL
+    SELECT tag, COUNT(Mm.movie_id) as num_movies
+    FROM Tags_Movielens, Movies_movielens Mm
+    WHERE Mm.movie_id = Tags_Movielens.movie_id
+    GROUP BY (tag))
+    select tag
+    from allmovies
+    group by tag
+    `;
+
+  connection.query(inputQuery, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } 
+    else {
+      res.json(data);
+    }
+  });
+}
+
+
+//GET home/search/result
+//Home: return movies matching the search parameter
+const returnSearch = async function(req, res) {
   /*
   Description: look up movie title and summary based on the inputted keyword and return movie information
   Route Parameter(s): type(string)
@@ -221,22 +256,6 @@ const search = async function(req, res) {
     order by priority desc
     LIMIT 20
   `;
-
-  const tagQuery = `
-  with allmovies as (
-    SELECT tag, COUNT(Ml.movie_id) as num_movies
-    FROM Tags_Letterboxd, Movies_letterboxd Ml
-    WHERE Tags_Letterboxd.movie_id = Ml.movie_id
-    GROUP BY (tag)
-    UNION ALL
-    SELECT tag, COUNT(Mm.movie_id) as num_movies
-    FROM Tags_Movielens, Movies_movielens Mm
-    WHERE Mm.movie_id = Tags_Movielens.movie_id
-    GROUP BY (tag))
-    select tag, sum(num_movies)
-    from allmovies
-    group by tag
-    `;
 
   connection.query(inputQuery, (err, data) => {
     if (err || data.length === 0) {
@@ -361,19 +380,6 @@ const movie = async function(req, res) {
     console.log(err);
     res.json({});
   });
-
-  // connection.query(movieinfoQuery, (err, data) => {
-  //   if (err || data.length === 0) {
-  //     console.log(movieinfoQuery);
-  //     console.log(err);
-  //     res.json({});
-  //   } 
-  //   else {
-  //     console.log(movieinfoQuery);
-  //     console.log(data);
-  //     res.json(data);
-  //   }
-  // });
 }
 
 
@@ -459,6 +465,7 @@ that the user gave(Query #2)
 module.exports = {
   home,
   search,
+  returnSearch,
   movie,
   user
 }
