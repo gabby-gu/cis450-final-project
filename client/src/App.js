@@ -31,7 +31,7 @@ export default function App() {
       <BrowserRouter>
         <NavBar />
         <Routes>
-          <Route path="/home" element={<HomePage />} />
+          <Route path="/" element={<HomePage />} /> {/* Update this line */}
           <Route path="/movie/:movie_id" element={<MovieInfoPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/user/:user_id" element={<UserPage />} />

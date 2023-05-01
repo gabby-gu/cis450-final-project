@@ -19,7 +19,7 @@ const NavText = ({ href, text, isMain }) => {
       <NavLink
         to={href}
         style={{
-          color: 'black',
+          color: 'white',
           textDecoration: 'none',
         }}
       >
@@ -37,7 +37,7 @@ export default function NavBar() {
     <AppBar position='static' style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
       <Container maxWidth='xl'>
         <Toolbar disableGutters>
-          <NavText href='/' text='CineScore' isMain />
+          <NavText href='/home' text='CineScore' isMain />
           <NavText href='/albums' text='Movies' />
           <NavText href='/songs' text='Users' />
         </Toolbar>
