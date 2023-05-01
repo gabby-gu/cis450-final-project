@@ -58,56 +58,77 @@ const home = async function(req, res) {
     FROM slay s, boots b
     WHERE b.tagId = s.tagId;`;*/
 
-    const defaultQuery = ` 
-    SELECT *
-    FROM Tags_Movielens
-    JOIN (SELECT movie_id, avg(rating_val) as rating
-        FROM Ratings_movielens
-        group by movie_id) rml using (movie_id)
-    WHERE tag LIKE '%${ind}%'
-    ORDER BY rating
-    LIMIT 5`;
+  const defaultQuery = ` 
+  SELECT *
+  FROM Tags_Movielens
+  JOIN (SELECT movie_id, avg(rating_val) as rating
+      FROM Ratings_movielens
+      group by movie_id) rml using (movie_id)
+  WHERE tag LIKE '%${ind}%'
+  ORDER BY rating
+  LIMIT 5`;
 
-    const sortReleaseDateQuery = ` 
-    with movies as
-    (SELECT *, avg(rating_val) as avg
-    FROM (SELECT * FROM Movies_letterboxd 
-          WHERE release_date < '%${stdDate}%' 
-          AND release_date > '%${stdDateYearBefore}%') mv
-    JOIN Ratings_letterboxd using (movie_id)
-    GROUP BY movie_id)
-    SELECT movie_id, title, image_url, avg
-    FROM movies
-    ORDER BY avg
-    LIMIT 5`;
+  const sortReleaseDateQuery = ` 
+  with movies as
+  (SELECT *, avg(rating_val) as avg
+  FROM (SELECT * FROM Movies_letterboxd 
+        WHERE release_date < '%${stdDate}%' 
+        AND release_date > '%${stdDateYearBefore}%') mv
+  JOIN Ratings_letterboxd using (movie_id)
+  GROUP BY movie_id)
+  SELECT movie_id, title, image_url, avg
+  FROM movies
+  ORDER BY avg
+  LIMIT 5`;
 
-    const mostReviewsQuery = ` 
-    SELECT *
-    FROM
-      (SELECT *
-      FROM Movie_movielens
-      UNION ALL
-      SELECT * 
-      FROM Movie_letterboxd) as allmovies
-    WHERE release_date < '%${stdDate}%'
-    ORDER BY release_date
-    LIMIT 5`;
+  const mostReviewsQuery = ` 
+  SELECT *
+  FROM
+    (SELECT *
+    FROM Movie_movielens
+    UNION ALL
+    SELECT * 
+    FROM Movie_letterboxd) as allmovies
+  WHERE release_date < '%${stdDate}%'
+  ORDER BY release_date
+  LIMIT 5`;
 
-
-  connection.query(defaultQuery, (err, data) => {
-    if (err || data.length === 0) {
-      // if there is an error for some reason, or if the query is empty (this should not be possible)
-      // print the error message and return an empty object instead
-      console.log(err);
-      res.json({});
-    } else {
-      // Here, we return results of the query as an object, keeping only relevant data
-      // being song_id and title which you will add. In this case, there is only one song
-      // so we just directly access the first element of the query results array (data)
-      // TODO (TASK 3): also return the song title in the response
-      res.json(data);
-    }
+  
+  // Multiple queries for Homepage
+  // TODO: Change
+  Promise.all([
+    conn.queryAsync(defaultQuery),
+    conn.queryAsync(sortReleaseDateQuery),
+    conn.queryAsync(mostReviewsQuery)
+  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults]
+  ) {
+    const results = {
+      default: organize(defaultResults),
+      sortRelease: organize(sortReleaseResults),
+      mostReviews: organize(mostReviewsResults)
+    };
+    console.log("--------------------");
+    console.log(results);
+    res.json(results);
+  }, function(err) {
+    console.log(err);
+    res.json({});
   });
+
+  // connection.query(defaultQuery, (err, data) => {
+  //   if (err || data.length === 0) {
+  //     // if there is an error for some reason, or if the query is empty (this should not be possible)
+  //     // print the error message and return an empty object instead
+  //     console.log(err);
+  //     res.json({});
+  //   } else {
+  //     // Here, we return results of the query as an object, keeping only relevant data
+  //     // being song_id and title which you will add. In this case, there is only one song
+  //     // so we just directly access the first element of the query results array (data)
+  //     // TODO (TASK 3): also return the song title in the response
+  //     res.json(data);
+  //   }
+  // });
 }
 
 //GET home/search
@@ -212,6 +233,7 @@ const movie = async function(req, res) {
   var avgTable = ''
   var id = movie_id.slice(1);
   var movieinfoQuery = '';
+  var userListQuery = '';
 
   if (movie_id[0] == 'm'){
     table = 'Movies_movielens';
@@ -248,26 +270,62 @@ const movie = async function(req, res) {
   GROUP BY movie_id),-1) as avg_rating) rt using (movie_id)
   `;
 
+  const mlUsers = `
+  SELECT user_id, rating_val
+  FROM ${table}
+  WHERE movie_id = ${id}
+  ORDER BY rating_val DESC
+  LIMIT 20`;
+
+  const lbUsers = `
+  SELECT user_id, rating_val
+  FROM ${table}
+  WHERE movie_id = '${id}'
+  ORDER BY rating_val DESC
+  LIMIT 20`;
+
+
   if (movie_id[0] == 'm'){
     movieinfoQuery = mlQuery;
+    userListQuery = mlUsers;
   } else if (movie_id[0] == 'l') {
     movieinfoQuery = lbQuery;
+    userListQuery = lbUsers;
   } else {
     console.log('Movie id in wrong format. Specify which table the movie is from.');
   }
   
-  connection.query(movieinfoQuery, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(movieinfoQuery);
-      console.log(err);
-      res.json({});
-    } 
-    else {
-      console.log(movieinfoQuery);
-      console.log(data);
-      res.json(data);
-    }
+  // Multiple queries for Movie page
+  // TODO: Change
+  Promise.all([
+    conn.queryAsync(movieinfoQuery),
+    conn.queryAsync(userListQuery)
+  ]).then(function([movieInfoResults, userListResults]
+  ) {
+    const results = {
+      movieInfoResults: organize(movieInfoResults),
+      userList: organize(userListResults)
+    };
+    console.log("--------------------");
+    console.log(results);
+    res.json(results);
+  }, function(err) {
+    console.log(err);
+    res.json({});
   });
+
+  // connection.query(movieinfoQuery, (err, data) => {
+  //   if (err || data.length === 0) {
+  //     console.log(movieinfoQuery);
+  //     console.log(err);
+  //     res.json({});
+  //   } 
+  //   else {
+  //     console.log(movieinfoQuery);
+  //     console.log(data);
+  //     res.json(data);
+  //   }
+  // });
 }
 
 
@@ -329,27 +387,6 @@ that the user gave(Query #2)
   // https://stackoverflow.com/questions/68804781/how-to-create-multiple-queries-in-a-single-get-request
   conn = require('bluebird').promisifyAll(connection)
   const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
-
-  // Multiple queries for Homepage
-  // TODO: Change
-  Promise.all([
-    conn.queryAsync(defaultQuery),
-    conn.queryAsync(sortReleaseDateQuery),
-    conn.queryAsync(mostReviewsQuery)
-  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults]
-  ) {
-    const results = {
-      default: organize(defaultResults),
-      sortRelease: organize(sortReleaseResults),
-      mostReviews: organize(mostReviewsResults)
-    };
-    console.log("--------------------");
-    console.log(results);
-    res.json(results);
-  }, function(err) {
-    console.log(err);
-    res.json({});
-  });
 
   // Multiple queries for User Page
   Promise.all([
