@@ -11,6 +11,8 @@ const connection = mysql.createConnection({
   database: config.rds_db
 });
 connection.connect((err) => err && console.log(err));
+conn = require('bluebird').promisifyAll(connection)
+const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
 const today = new Date();
 function timeConverter(timestamp) {
@@ -58,56 +60,104 @@ const home = async function(req, res) {
     FROM slay s, boots b
     WHERE b.tagId = s.tagId;`;*/
 
-    const defaultQuery = ` 
+  const defaultQuery = ` 
+  SELECT *
+  FROM Tags_Movielens
+  JOIN (SELECT movie_id, avg(rating_val) as rating
+      FROM Ratings_movielens
+      group by movie_id) rml using (movie_id)
+  WHERE tag LIKE '%${ind}%'
+  ORDER BY rating
+  LIMIT 5`;
+
+  const sortReleaseDateQuery = ` 
+  with movies as
+  (SELECT *, avg(rating_val) as avg
+  FROM (SELECT * FROM Movies_letterboxd 
+        WHERE release_date < '%${stdDate}%' 
+        AND release_date > '%${stdDateYearBefore}%') mv
+  JOIN Ratings_letterboxd using (movie_id)
+  GROUP BY movie_id)
+  SELECT movie_id, title, image_url, avg
+  FROM movies
+  ORDER BY avg
+  LIMIT 5`;
+
+  const mostReviewsQuery = ` 
+  SELECT *
+  FROM
+    (SELECT *
+    FROM Movie_movielens
+    UNION ALL
+    SELECT * 
+    FROM Movie_letterboxd) as allmovies
+  WHERE release_date < '%${stdDate}%'
+  ORDER BY release_date
+  LIMIT 5`;
+
+  const threeUsersThreeGenresQuery = `
+  WITH randReviewers AS (
     SELECT *
-    FROM Tags_Movielens
-    JOIN (SELECT movie_id, avg(rating_val) as rating
-        FROM Ratings_movielens
-        group by movie_id) rml using (movie_id)
-    WHERE tag LIKE '%${ind}%'
-    ORDER BY rating
-    LIMIT 5`;
+    FROM (SELECT username FROM Users
+    ORDER BY num_reviews DESC LIMIT 50) top
+     ORDER BY RAND()
+     LIMIT 3
+  ),
+  MovieAndTags AS (
+      SELECT tag, rating_val, user_id
+      FROM Tags_Letterboxd TL
+      JOIN Ratings_letterboxd RL ON TL.movie_id = RL.movie_id
+      JOIN randReviewers RV on RV.username = RL.user_id
+  ),
+  combined AS (
+  SELECT user_id, tag, AVG(rating_val) AS avg_rating_of_genre
+  FROM MovieAndTags M
+  GROUP BY user_id, tag)
+  SELECT *
+  FROM combined c
+  WHERE (SELECT count(*)
+          FROM combined
+          WHERE avg_rating_of_genre > c.avg_rating_of_genre
+            AND c.user_id = user_id) < 3`;
 
-    const sortReleaseDateQuery = ` 
-    with movies as
-    (SELECT *, avg(rating_val) as avg
-    FROM (SELECT * FROM Movies_letterboxd 
-          WHERE release_date < '%${stdDate}%' 
-          AND release_date > '%${stdDateYearBefore}%') mv
-    JOIN Ratings_letterboxd using (movie_id)
-    GROUP BY movie_id)
-    SELECT movie_id, title, image_url, avg
-    FROM movies
-    ORDER BY avg
-    LIMIT 5`;
-
-    const mostReviewsQuery = ` 
-    SELECT *
-    FROM
-      (SELECT *
-      FROM Movie_movielens
-      UNION ALL
-      SELECT * 
-      FROM Movie_letterboxd) as allmovies
-    WHERE release_date < '%${stdDate}%'
-    ORDER BY release_date
-    LIMIT 5`;
-
-
-  connection.query(defaultQuery, (err, data) => {
-    if (err || data.length === 0) {
-      // if there is an error for some reason, or if the query is empty (this should not be possible)
-      // print the error message and return an empty object instead
-      console.log(err);
-      res.json({});
-    } else {
-      // Here, we return results of the query as an object, keeping only relevant data
-      // being song_id and title which you will add. In this case, there is only one song
-      // so we just directly access the first element of the query results array (data)
-      // TODO (TASK 3): also return the song title in the response
-      res.json(data);
-    }
+  
+  // Multiple queries for Homepage
+  // TODO: Change
+  Promise.all([
+    conn.queryAsync(defaultQuery),
+    conn.queryAsync(sortReleaseDateQuery),
+    conn.queryAsync(mostReviewsQuery),
+    conn.queryAsync(threeUsersThreeGenresQuery),
+  ]).then(function([defaultResults, sortReleaseResults, mostReviewsResults, threeUsersThreeGenresResults]
+  ) {
+    const results = {
+      default: organize(defaultResults),
+      sortRelease: organize(sortReleaseResults),
+      mostReviews: organize(mostReviewsResults),
+      threeUsersThreeGenres: organize(threeUsersThreeGenresResults)
+    };
+    console.log("--------------------");
+    console.log(results);
+    res.json(results);
+  }, function(err) {
+    console.log(err);
+    res.json({});
   });
+
+  // connection.query(defaultQuery, (err, data) => {
+  //   if (err || data.length === 0) {
+  //     // if there is an error for some reason, or if the query is empty (this should not be possible)
+  //     // print the error message and return an empty object instead
+  //     console.log(err);
+  //     res.json({});
+  //   } else {
+  //     // Here, we return results of the query as an object, keeping only relevant data
+  //     // being song_id and title which you will add. In this case, there is only one song
+  //     // so we just directly access the first element of the query results array (data)
+  //     // TODO (TASK 3): also return the song title in the response
+  //     res.json(data);
+  //   }
+  // });
 }
 
 //GET home/search
@@ -172,6 +222,22 @@ const search = async function(req, res) {
     LIMIT 20
   `;
 
+  const tagQuery = `
+  with allmovies as (
+    SELECT tag, COUNT(Ml.movie_id) as num_movies
+    FROM Tags_Letterboxd, Movies_letterboxd Ml
+    WHERE Tags_Letterboxd.movie_id = Ml.movie_id
+    GROUP BY (tag)
+    UNION ALL
+    SELECT tag, COUNT(Mm.movie_id) as num_movies
+    FROM Tags_Movielens, Movies_movielens Mm
+    WHERE Mm.movie_id = Tags_Movielens.movie_id
+    GROUP BY (tag))
+    select tag, sum(num_movies)
+    from allmovies
+    group by tag
+    `;
+
   connection.query(inputQuery, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -209,39 +275,105 @@ const movie = async function(req, res) {
   // MovieLens movid_id: int
 
   var table = ''
+  var ratingTable = ''
   var avgTable = ''
   var id = movie_id.slice(1);
+  var movieinfoQuery = '';
+  var userListQuery = '';
 
   if (movie_id[0] == 'm'){
     table = 'Movies_movielens';
+    ratingTable = 'Ratings_movielens'
     avgTable = 'Ratings_movielens';
     id = parseInt(id);
   } else if (movie_id[0] == 'l') {
     table = 'Movies_letterboxd';
+    ratingTable = 'Ratings_letterboxd';
     avgTable = 'Ratings_letterboxd';
   } else {
     console.log('Movie id in wrong format. Specify which table the movie is from.');
   }
 
-  const movieInfoQuery = ` 
+  const mlQuery = ` 
   SELECT *
   FROM (SELECT * FROM ${table}
   WHERE movie_id = ${id} LIMIT 1) ml
-  JOIN (SELECT movie_id, avg(rating_val) as avg_rating
+  JOIN
+      (SELECT ${id} as movie_id, COALESCE(
+      (SELECT avg(rating_val) as avg_rating
       FROM ${avgTable}
       WHERE movie_id = ${id}
-      GROUP BY movie_id) rt using (movie_id)
+      GROUP BY movie_id),-1) as avg_rating) rt using (movie_id)
   `;
+
+  const lbQuery = ` 
+  SELECT *
+  FROM (SELECT * FROM ${table}
+  WHERE movie_id = '${id}' LIMIT 1) ml
+  JOIN
+  (SELECT '${id}' as movie_id, COALESCE(
+  (SELECT avg(rating_val) as avg_rating
+  FROM ${avgTable}
+  WHERE movie_id = '${id}'
+  GROUP BY movie_id),-1) as avg_rating) rt using (movie_id)
+  `;
+
+  const mlUsers = `
+  SELECT user_id, rating_val
+  FROM ${ratingTable}
+  WHERE movie_id = ${id}
+  ORDER BY rating_val DESC
+  LIMIT 20`;
+
+  const lbUsers = `
+  SELECT user_id, rating_val
+  FROM ${ratingTable}
+  WHERE movie_id = '${id}'
+  ORDER BY rating_val DESC
+  LIMIT 20`;
+
+
+  if (movie_id[0] == 'm'){
+    movieinfoQuery = mlQuery;
+    userListQuery = mlUsers;
+  } else if (movie_id[0] == 'l') {
+    movieinfoQuery = lbQuery;
+    userListQuery = lbUsers;
+  } else {
+    console.log('Movie id in wrong format. Specify which table the movie is from.');
+  }
   
-  connection.query(movieInfoQuery, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      console.log(data);
-      res.json(data);
-    }
+  // Multiple queries for Movie page
+  // TODO: Change
+  Promise.all([
+    conn.queryAsync(movieinfoQuery),
+    conn.queryAsync(userListQuery)
+  ]).then(function([movieInfoResults, userListResults]
+  ) {
+    const results = {
+      movieInfoResults: organize(movieInfoResults),
+      userList: organize(userListResults)
+    };
+    console.log("--------------------");
+    console.log(results);
+    res.json(results);
+  }, function(err) {
+    console.log(err);
+    res.json({});
   });
+
+  // connection.query(movieinfoQuery, (err, data) => {
+  //   if (err || data.length === 0) {
+  //     console.log(movieinfoQuery);
+  //     console.log(err);
+  //     res.json({});
+  //   } 
+  //   else {
+  //     console.log(movieinfoQuery);
+  //     console.log(data);
+  //     res.json(data);
+  //   }
+  // });
 }
 
 
@@ -269,7 +401,7 @@ that the user gave(Query #2)
   GROUP BY U.username, num_reviews
   `;
 
-  // complex query: randomly retrieve movies greater than avg rating
+  // complex query: randomly retrieve movies greater than user's avg rating
   const overAvgQuery = ` 
   WITH getAvgRating AS (SELECT U.username, num_reviews, AVG(rating_val) AS avg_score
   FROM Users U JOIN Ratings_letterboxd Rl on U.username = Rl.user_id
@@ -285,6 +417,7 @@ that the user gave(Query #2)
   LIMIT 3
   `;
 
+  // return avg rating for each tag from letterbox data + return one top rated movie for each tag
   const perTagQuery = ` 
   WITH info AS (SELECT tag, avg(rating_val) as avgpertag, max(rating_val) as maxpertag, Rl.movie_id
   FROM Users
@@ -300,9 +433,8 @@ that the user gave(Query #2)
 
   // Use promise to return results from multiple queries
   // https://stackoverflow.com/questions/68804781/how-to-create-multiple-queries-in-a-single-get-request
-  conn = require('bluebird').promisifyAll(connection)
-  const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
+  // Multiple queries for User Page
   Promise.all([
     conn.queryAsync(userInfoQuery),
     conn.queryAsync(overAvgQuery),
