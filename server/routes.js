@@ -229,7 +229,7 @@ const returnSearch = async function(req, res) {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
-    } else if ((keyword == '' & date_lower > date_upper & tag == '')) {
+    } else if ((keyword == '' & date_lower > date_upper)) {
       console.log("invalid search parameter")
       res.json({}); //will have to fix this later
     } 
