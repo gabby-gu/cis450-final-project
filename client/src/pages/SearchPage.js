@@ -42,7 +42,7 @@ export default function MoviesPage() {
     { 
       field: 'title', 
       headerName: 'Title', 
-      width: 300,
+      width: 1000,
       headerClassName: 'title-header',
       renderCell: (params) => {
         return (
@@ -51,6 +51,17 @@ export default function MoviesPage() {
           </NavLink>
         )
       } 
+    },
+    {
+      field: 'release_date',
+      headerName: 'Release Date',
+      headerClassName: 'date-header',
+      width: 150,
+      renderCell: (params) => {
+        return (
+          <div style={{ color: 'white' }}>{params.value}</div>
+        )
+      }
     }
   ];
 
@@ -65,7 +76,7 @@ export default function MoviesPage() {
           <Button variant="contained" color="primary" onClick={search}>Search</Button>
         </Grid>
       </Grid>
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: 30, marginBottom: 30 }}>
         {tags.map(tag => (
           <Button key={tag} style={{ margin: 5 }} variant="outlined" onClick={() => handleTagClick(tag)}>
             {tag}

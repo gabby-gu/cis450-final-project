@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Container, Divider, Link } from '@mui/material';
 import { NavLink } from 'react-router-dom';
+import { DataGrid } from '@mui/x-data-grid';
 
 import LazyTable from '../components/LazyTable';
 const config = require('../config.json');
@@ -35,6 +36,21 @@ export default function HomePage() {
     return backgrounds[Math.floor(Math.random() * backgrounds.length)];
   }
 
+  const columns = [
+  { field: 'userId', headerName: 'User ID', width: 150 },
+  { field: 'tag', headerName: 'Tag', width: 150 },
+  { field: 'avgRating', headerName: 'Average Rating', width: 200 },
+];
+
+const rows = [
+  ...threeUsersThreeGenres.map((row, index) => ({
+    id: index,
+    userId: row.user_id,
+    tag: row.tag,
+    avgRating: row.avg_rating_of_genre,
+  })),
+];
+
   return (
     <div
       style={{
@@ -49,6 +65,7 @@ export default function HomePage() {
         
       }}
     >    
+    <Divider style={{ marginBottom: "20px" }} />
       <Container maxWidth="lg">
   <h1 style={{ align: "right", paddingTop: "30%", paddingBottom: "20px", fontFamily: "Poppins Light", fontSize: "80px" }}>CINESCORE</h1>
   <p style={{ fontFamily: "Poppins Regular", marginTop: "-20px" }}> <i>Honest Reviews From Real Users </i></p>
@@ -56,7 +73,7 @@ export default function HomePage() {
   <Divider style={{ marginBottom: "20px" }} />
 
   <div style={{ paddingTop: "150px" }}>
-    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Movies to Try:</h2>
+    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Movies to Try :</h2>
     <ul>
       {movie.map((item) => (
         <li key={item.movie_id}>
@@ -71,7 +88,7 @@ export default function HomePage() {
   <Divider style={{ marginTop: "50px", marginBottom: "20px" }} />
 
   <div>
-    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Latest Released: </h2>
+    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Latest Released : </h2>
     <ul>
       {sortRelease.map((item) => (
         <li key={item.movie_id}>
@@ -85,18 +102,15 @@ export default function HomePage() {
 
   <Divider style={{ marginTop: "50px", marginBottom: "20px" }} />
 
-  <div>
-    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Average User Rating by Genre: </h2>
-    <ul>
-      {threeUsersThreeGenres.map((item) => (
-        <li key={item.user_id}>
-          <NavLink to={`/user/${item.user_id}`}>
-            {item.user_id} - {item.tag} - {item.avg_rating_of_genre}
-          </NavLink>
-        </li>
-      ))}
-    </ul>
-  </div>
+  
+
+   <div>
+      <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Average User Rating by Genre : </h2>
+      <div style={{ height: 400, width: '100%' }}>
+        <DataGrid rows={rows} columns={columns} pageSize={5} />
+      </div>
+    </div>
+    <Divider style={{ marginTop: "70px", marginBottom: "20px" }} />
 
 </Container>
 
