@@ -46,6 +46,8 @@ export default function UserPage() {
   const [userData, setUserData] = useState([{}]); 
   const [overAvg, setOverAvg] = useState([{}]); 
   const [perTagMovies, setPerTag] = useState([{}]); 
+  const [posterUrlList, setPosterUrlList] = useState([]);
+
 
   useEffect(() => {
     if (isAllNumbers) {
@@ -61,7 +63,27 @@ export default function UserPage() {
         setUserData(resJson.userInfo);
         setOverAvg(resJson.overAvg);
         setPerTag(resJson.perTagMovies);
-      });
+
+        // fetch all the poster URLs for the movies in the overAvg array
+      const posterUrls = [];
+      const api_key = 'afeb2e4f';
+      for (const movie of resJson.overAvg) {
+        const imdb_id = movie.imdb_id;
+        const url = `http://www.omdbapi.com/?apikey=${api_key}&i=${imdb_id}`;
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            const posterUrl = data.Poster;
+            console.log(posterUrl); // this should output the poster URL
+            posterUrls.push(posterUrl);
+            if (posterUrls.length === resJson.overAvg.length) {
+              // add all the fetched poster URLs to the posterUrlList state variable
+              setPosterUrlList(posterUrls);
+            }
+          })
+          .catch(error => console.error(error));
+      }
+    });
   }, [user_id, isAllNumbers]);
   
   if (isAllNumbers) {
@@ -80,16 +102,35 @@ export default function UserPage() {
 
              <p style = {{fontSize: "40px"}}> {userData[0].username} </p>
 
-            <p style = {{fontSize: "14px"}}>{userData[0].num_reviews} Reviews</p>
-            <p style = {{fontSize: "14px"}}>Average Rating Given:   {userData[0].avg_score}<br/> </p>
+            <p style = {{fontSize: "14px"}}>{userData[0].num_reviews} Reviews   Average Rating Given:   {userData[0].avg_score}</p>
+            <p style = {{fontSize: "14px"}}><br/> </p>
             
-          <Stack spacing={2}>
+
+          Liked Movies:
+
+          <ImageList cols={3} gap={8}>
+      {posterUrlList.map((posterUrl, index) => (
+        <ImageListItem key={index}>
+          <img
+            src={posterUrl}
+            alt=""
+            loading="lazy"
+          />
+        </ImageListItem>
+      ))}
+    </ImageList>
+
+
+
+          {/* <Stack spacing={2}>
             {overAvg.map(overAvg => (
               <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
                 <Item>{overAvg.title}</Item>
               </NavLink>
             ))}
-          </Stack>
+          </Stack> */}
+
+          Favorite Movies
           <Stack spacing={2}>
             {perTagMovies.map(perTagMovies => (
               <Item key={perTagMovies.movie_id}>{perTagMovies.tag}: {perTagMovies.title}</Item>
@@ -109,45 +150,3 @@ export default function UserPage() {
   )
       
 }
-
-const itemData = [
-    {
-      img: 'https://m.media-amazon.com/images/M/MV5BYTdiOTIyZTQtNmQ1OS00NjZlLWIyMTgtYzk5Y2M3ZDVmMDk1XkEyXkFqcGdeQXVyMTAzMDg4NzU0._V1_FMjpg_UX1000_.jpg',
-      title: 'Everything Everywhere'
-    },
-    {
-      img: 'https://m.media-amazon.com/images/I/61OUGpUfAyL._AC_UF894,1000_QL80_.jpg',
-      title: 'Avatar: Way of the Water'
-    },
-    {
-      img: 'https://images.unsplash.com/photo-1522770179533-24471fcdba45',
-      title: 'Camera',
-      author: '@helloimnik',
-    },
-    {
-      img: 'https://images.unsplash.com/photo-1444418776041-9c7e33cc5a9c',
-      title: 'Coffee',
-      author: '@nolanissac',
-    },
-    {
-      img: 'https://images.unsplash.com/photo-1533827432537-70133748f5c8',
-      title: 'Hats',
-      author: '@hjrc33',
-    },
-    {
-      img: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62',
-      title: 'Honey',
-      author: '@arwinneil',
-    },
-    {
-      img: 'https://images.unsplash.com/photo-1516802273409-68526ee1bdd6',
-      title: 'Basketball',
-      author: '@tjdragotta',
-    },
-    {
-      img: 'https://images.unsplash.com/photo-1518756131217-31eb79b20e8f',
-      title: 'Fern',
-      author: '@katie_wasserman',
-    }
-   
-  ];
