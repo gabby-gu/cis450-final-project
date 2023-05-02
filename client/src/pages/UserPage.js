@@ -29,11 +29,12 @@ const config = require('../config.json');
 
 
 const Item = styled(Paper)(({ theme }) => ({
-    backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+    backgroundColor: '#22222e',
+    fontFamily: "Poppins Regular",
     ...theme.typography.body2,
     padding: theme.spacing(1),
     textAlign: 'center',
-    color: theme.palette.text.secondary,
+    color: 'white',
   }));
 
   
@@ -93,7 +94,7 @@ export default function UserPage() {
   
   return (
 
-    <div style ={{height: '100vh', marginTop: '5%'}}>
+     <div style ={{marginTop: '5%'}}>
 
     <center>
       <Card sx={{ overflow: 'visible', fontFamily: 'Poppins Regular' , width: '60%', backgroundColor: '#18141c', color: 'white', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
@@ -131,7 +132,6 @@ export default function UserPage() {
             ))}
           </Stack>  */}
 
-          Favorite Movies 
           <Stack spacing={2}>
             {perTagMovies.map(perTagMovies => (
               <Item key={perTagMovies.movie_id}>{perTagMovies.tag}: {perTagMovies.title}</Item>
@@ -147,7 +147,7 @@ export default function UserPage() {
 
     </center>
 
-</div>
+ </div>
   )
       
 }
