@@ -86,7 +86,7 @@ export default function HomePage() {
   <Divider style={{ marginTop: "50px", marginBottom: "20px" }} />
 
   <div>
-    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Average User Rating by Genre: </h2>
+    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Genre Choices by Top Reviewers: </h2>
     <ul>
       {threeUsersThreeGenres.map((item) => (
         <li key={item.user_id}>
