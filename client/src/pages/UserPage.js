@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Link, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
+import { NavLink } from 'react-router-dom';
 import * as React from 'react';
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
@@ -84,9 +85,9 @@ export default function UserPage() {
             
           <Stack spacing={2}>
             {overAvg.map(overAvg => (
-              <a href={`/movie/${overAvg.type}${overAvg.movie_id}`} style = {{textDecoration: 'none'}}>
-              <Item key={overAvg.movie_id}> {overAvg.title}</Item>
-          </a>
+              <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
+                <Item>{overAvg.title}</Item>
+              </NavLink>
             ))}
           </Stack>
           <Stack spacing={2}>

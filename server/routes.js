@@ -127,7 +127,7 @@ const home = async function(req, res) {
 
 //GET home/search
 //Home: return tags that user can input for search
-const search = async function(req, res) {
+const tags = async function(req, res) {
   /*
   Description: look up movie title and summary based on the inputted keyword and return movie information
   Route Parameter(s): 
@@ -139,19 +139,18 @@ const search = async function(req, res) {
   */
 
   const inputQuery = `
-  with allmovies as (
+  SELECT if(lbtags.tag IS NOT NULL, lbtags.tag, mltags.tag) as tag
+FROM (
     SELECT tag, COUNT(Ml.movie_id) as num_movies
-    FROM Tags_Letterboxd, Movies_letterboxd Ml
-    WHERE Tags_Letterboxd.movie_id = Ml.movie_id
-    GROUP BY (tag)
-    UNION ALL
+    FROM Tags_Letterboxd
+    JOIN Movies_letterboxd Ml on Tags_Letterboxd.movie_id = Ml.movie_id
+    GROUP BY tag) lbtags
+RIGHT OUTER JOIN (
     SELECT tag, COUNT(Mm.movie_id) as num_movies
-    FROM Tags_Movielens, Movies_movielens Mm
-    WHERE Mm.movie_id = Tags_Movielens.movie_id
-    GROUP BY (tag))
-    select tag
-    from allmovies
-    group by tag
+    FROM Tags_Movielens
+    JOIN Movies_movielens Mm on Tags_Movielens.movie_id = Mm.movie_id
+    GROUP BY tag) mltags ON lbtags.tag = mltags.tag
+ORDER BY  if(lbtags.tag IS NOT NULL, lbtags.num_movies + mltags.num_movies, mltags.num_movies) desc
     `;
 
   connection.query(inputQuery, (err, data) => {
@@ -164,6 +163,33 @@ const search = async function(req, res) {
     }
   });
 }
+
+const search = async function(req, res) {
+  /*
+  Description: outputs 10 random movies from letterboxd
+  Route Parameter(s): 
+  Query Parameter(s): 
+  Route Handler: author(req, res)
+  Return Type: JSON
+  */
+
+  const inputQuery = `
+  SELECT * FROM Movies_letterboxd
+ORDER BY RAND()
+LIMIT 10;
+    `;
+
+  connection.query(inputQuery, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } 
+    else {
+      res.json(data);
+    }
+  });
+}
+
 
 
 //GET home/search/result
@@ -202,33 +228,27 @@ const returnSearch = async function(req, res) {
   const date_lower = timeConverter(timestamp_lower);
 
   const inputQuery = `
-  WITH combined as (
-    SELECT movie_id, title, image_url, release_date, priority, type FROM
-        (SELECT *, 2 as priority
-        FROM Movies_letterboxd
-        WHERE title LIKE '%${keyword}%' OR movie_id LIKE '%${keyword}%'
-        UNION
-        SELECT *, 1 as priority
-        FROM Movies_letterboxd
-        WHERE overview LIKE '%${keyword}%') as mvlb
-    JOIN (SELECT movie_id, tag FROM Tags_Letterboxd) LBT USING (movie_id)
-        WHERE tag LIKE '%${tag}%'
-    UNION ALL
-    SELECT movie_id, title, image_url, release_date, priority, type from
-        (SELECT *
-        FROM (SELECT *, 2 as priority
-            FROM Movies_movielens
-            WHERE title LIKE '%${keyword}%'
-            UNION
-            SELECT *, 1 as priority
-            FROM Movies_movielens
-            WHERE overview LIKE '%${keyword}%') as mvml
-      JOIN (SELECT movie_id, tag FROM Tags_Movielens) MT USING (movie_id)
-        WHERE tag LIKE '%${tag}%') ml
+  WITH lb as (
+    SELECT DISTINCT movie_id, title, release_date, imdb_id, type, if (overview LIKE '%${keyword}%',1, 2) as priority
+    FROM Movies_letterboxd mlb
+    JOIN (SELECT movie_id, tag FROM Tags_Letterboxd WHERE tag LIKE '%${tag}%') LBT USING (movie_id)
+    WHERE title LIKE '%${keyword}%' OR movie_id LIKE '%${keyword}%' OR overview LIKE '%${keyword}%'
     )
-    SELECT DISTINCT movie_id, title, image_url, release_date, type
-    FROM combined
-    WHERE release_date > '${date_lower}' AND release_date < '${date_upper}'
+    , ml as
+    (SELECT DISTINCT mm.movie_id, title, release_date, imdb_id, type,if (title LIKE '%${keyword}%' ,2, 1) as priority
+    FROM Movies_movielens mm
+    JOIN (SELECT movie_id, tag FROM Tags_Movielens WHERE tag LIKE '%${tag}%') MT USING (movie_id)
+    WHERE title LIKE '%${keyword}%' OR overview LIKE '%${keyword}%'
+    )
+    , combined as (
+    SELECT if(lb.movie_id IS NOT NULL, lb.movie_id, ml.movie_id) as movie_id,
+           if(lb.title IS NOT NULL, lb.title, ml.title) as title,
+           if(lb.release_date IS NOT NULL, lb.release_date, ml.release_date) as release_date,
+           if(lb.type IS NOT NULL, lb.type, ml.type) as type,
+           if(lb.priority IS NOT NULL AND ml.priority IS NOT NULL, lb.priority+ml.priority, if(lb.priority IS NULL, ml.priority, lb.priority)) as priority
+    FROM lb LEFT OUTER JOIN ml on lb.imdb_id = ml.imdb_id)
+    SELECT * FROM combined
+    WHERE release_date  > '${date_lower}' AND release_date < '${date_upper}'
     order by priority desc;
   `;
 
@@ -236,7 +256,7 @@ const returnSearch = async function(req, res) {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
-    } else if ((keyword == '' & date_lower > date_upper & tag == '')) {
+    } else if ((keyword == '' & date_lower > date_upper)) {
       console.log("invalid search parameter")
       res.json({}); //will have to fix this later
     } 
@@ -432,6 +452,7 @@ that the user gave(Query #2)
 
 module.exports = {
   home,
+  tags,
   search,
   returnSearch,
   movie,

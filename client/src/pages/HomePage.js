@@ -50,41 +50,56 @@ export default function HomePage() {
       }}
     >    
       <Container maxWidth="lg">
+  <h1 style={{ align: "right", paddingTop: "30%", paddingBottom: "20px", fontFamily: "Poppins Light", fontSize: "80px" }}>CINESCORE</h1>
+  <p style={{ fontFamily: "Poppins Regular", marginTop: "-20px" }}> <i>Honest Reviews From Real Users </i></p>
 
-        <h1 style = {{ align: "right", paddingTop: "30%", paddingBottom: "20px", fontFamiy: "Poppins Light", fontSize: "80px"}}>CINESCORE</h1>
-        <p style = {{ fontFamily: "Poppins Regular", marginTop: "-20px"}}> <i>Honest Reviews From Real Users </i></p>
+  <Divider style={{ marginBottom: "20px" }} />
 
-        <h2> Movies to Try: </h2>
-        <ul>
-          {movie.map((item) => (
-            <li key={item.movie_id}>
-              <NavLink to={`/movie/m${item.movie_id}`}>
-                {item.title}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-        <h2>Sorted by Release Date: </h2>
-        <ul>
-          {sortRelease.map((item) => (
-            <li key={item.movie_id}>
-              <NavLink to={`/movie/l${item.movie_id}`}>
-                {item.title} - {item.release_date} - {item.avg}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-        <h2>Three Users Three Genres: </h2>
-        <ul>
-          {threeUsersThreeGenres.map((item) => (
-            <li key={item.user_id}>
-              <NavLink to={`/user/${item.user_id}`}>
-              {item.user_id} - {item.tag} - {item.avg_rating_of_genre}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </Container>
+  <div style={{ paddingTop: "150px" }}>
+    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Movies to Try:</h2>
+    <ul>
+      {movie.map((item) => (
+        <li key={item.movie_id}>
+          <NavLink to={`/movie/m${item.movie_id}`}>
+            {item.title}
+          </NavLink>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <Divider style={{ marginTop: "50px", marginBottom: "20px" }} />
+
+  <div>
+    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Latest Released: </h2>
+    <ul>
+      {sortRelease.map((item) => (
+        <li key={item.movie_id}>
+          <NavLink to={`/movie/l${item.movie_id}`}>
+            {item.title} - {item.release_date} - {item.avg}
+          </NavLink>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <Divider style={{ marginTop: "50px", marginBottom: "20px" }} />
+
+  <div>
+    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Average User Rating by Genre: </h2>
+    <ul>
+      {threeUsersThreeGenres.map((item) => (
+        <li key={item.user_id}>
+          <NavLink to={`/user/${item.user_id}`}>
+            {item.user_id} - {item.tag} - {item.avg_rating_of_genre}
+          </NavLink>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+</Container>
+
     </div>
   );
 }
