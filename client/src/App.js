@@ -13,6 +13,11 @@ import SearchPage from './pages/SearchPage';
 import MovieInfoPage from './pages/MovieInfoPage';
 import UserPage from './pages/UserPage';
 
+
+import "./fonts/Poppins-Regular.ttf";
+import "./fonts/Poppins-Light.ttf";
+import './App.css';
+
 // createTheme enables you to customize the look and feel of your app past the default
 // in this case, we only change the color scheme
 export const theme = createTheme({
