@@ -73,29 +73,24 @@ const home = async function(req, res) {
   LIMIT 3`;
 
   const threeUsersThreeGenresQuery = `
-  WITH randReviewers AS (
+  WITH combined AS (
+    SELECT user_id, tag, AVG(rating_val) AS avg_rating_of_genre
+    FROM (SELECT tag, rating_val, user_id
+    FROM Tags_Letterboxd TL
+    JOIN Ratings_letterboxd RL ON TL.movie_id = RL.movie_id
+    JOIN (SELECT *
+         FROM (SELECT username FROM Users
+                 ORDER BY num_reviews DESC LIMIT 50) top
+         ORDER BY RAND()
+         LIMIT 3
+         ) RV on RV.username = RL.user_id) M
+    GROUP BY user_id, tag)
     SELECT *
-    FROM (SELECT username FROM Users
-    ORDER BY num_reviews DESC LIMIT 50) top
-     ORDER BY RAND()
-     LIMIT 3
-  ),
-  MovieAndTags AS (
-      SELECT tag, rating_val, user_id
-      FROM Tags_Letterboxd TL
-      JOIN Ratings_letterboxd RL ON TL.movie_id = RL.movie_id
-      JOIN randReviewers RV on RV.username = RL.user_id
-  ),
-  combined AS (
-  SELECT user_id, tag, AVG(rating_val) AS avg_rating_of_genre
-  FROM MovieAndTags M
-  GROUP BY user_id, tag)
-  SELECT *
-  FROM combined c
-  WHERE (SELECT count(*)
+    FROM combined c
+    WHERE (SELECT count(*)
           FROM combined
           WHERE avg_rating_of_genre > c.avg_rating_of_genre
-            AND c.user_id = user_id) < 3`;
+          AND c.user_id = user_id) < 3`;
 
   
   // Multiple queries for Homepage
@@ -400,15 +395,14 @@ that the user gave(Query #2)
 
   // complex query: randomly retrieve movies greater than user's avg rating
   const overAvgQuery = ` 
-  WITH getAvgRating AS (SELECT U.username, num_reviews, AVG(rating_val) AS avg_score
-  FROM Users U JOIN Ratings_letterboxd Rl on U.username = Rl.user_id
-  GROUP BY U.username, num_reviews),
-  getMovie AS (SELECT l.movie_id, U.username
-                  FROM Users U JOIN Ratings_letterboxd l on U.username = l.user_id JOIN
-                      getAvgRating g ON l.user_id = g.username
-                  WHERE rating_val > avg_score)
   SELECT *
-  FROM getMovie g JOIN Movies_letterboxd l ON g.movie_id=l.movie_id
+  FROM (SELECT l.movie_id, U.username
+  FROM Users U JOIN Ratings_letterboxd l on U.username = l.user_id
+  WHERE rating_val > (SELECT AVG(rating_val) AS avg_score
+                        FROM Ratings_letterboxd Rl
+                        GROUP BY user_id
+                        HAVING user_id = '${username}')) g
+  JOIN Movies_letterboxd l ON g.movie_id=l.movie_id
   WHERE g.username = '${username}'
   ORDER BY RAND()
   LIMIT 3
