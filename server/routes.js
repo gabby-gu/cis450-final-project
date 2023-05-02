@@ -90,7 +90,7 @@ const home = async function(req, res) {
     WHERE (SELECT count(*)
           FROM combined
           WHERE avg_rating_of_genre > c.avg_rating_of_genre
-          AND c.user_id = user_id) < 3`;
+          AND user_id IN (c.user_id)) < 3`;
 
   
   // Multiple queries for Homepage
