@@ -110,7 +110,7 @@ export default function UserPage() {
             
 
 
-          {/* <ImageList cols={3} gap={8} sx={{ maxWidth: '600px' }}>
+          <ImageList cols={3} gap={8} sx={{ maxWidth: '600px' }}>
   {posterUrlList.map((posterUrl, index) => (
     <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
       <ImageListItem key={index}>
@@ -118,20 +118,20 @@ export default function UserPage() {
       </ImageListItem>
     </NavLink>
   ))}
-</ImageList> */}
+</ImageList>
   
 
 
-
+{/* 
            <Stack spacing={2}>
             {overAvg.map(overAvg => (
               <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
                 <Item>{overAvg.title}</Item>
               </NavLink>
             ))}
-          </Stack> 
+          </Stack>  */}
 
-          Favorite Movies
+          Favorite Movies 
           <Stack spacing={2}>
             {perTagMovies.map(perTagMovies => (
               <Item key={perTagMovies.movie_id}>{perTagMovies.tag}: {perTagMovies.title}</Item>
