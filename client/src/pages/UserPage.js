@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Container, Link, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
 import { NavLink } from 'react-router-dom';
+
 import * as React from 'react';
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
@@ -44,7 +45,7 @@ export default function UserPage() {
   const isAllNumbers = /^\d+$/.test(user_id);
 
   const [userData, setUserData] = useState([{}]); 
-  const [overAvg, setOverAvg] = useState([{}]); 
+  const [overAvg, setOverAvg] = useState([]);
   const [perTagMovies, setPerTag] = useState([{}]); 
   const [posterUrlList, setPosterUrlList] = useState([]);
 
@@ -100,35 +101,35 @@ export default function UserPage() {
           
            <Avatar sx={{ width: 120, height: 120, marginTop: '-60px'}}></Avatar>
 
-             <p style = {{fontSize: "40px"}}> {userData[0].username} </p>
+            <div style = {{fontSize: "40px"}}> {userData[0].username} </div>
 
-            <p style = {{fontSize: "14px"}}>{userData[0].num_reviews} Reviews   Average Rating Given:   {userData[0].avg_score}</p>
-            <p style = {{fontSize: "14px"}}><br/> </p>
+            <div style = {{fontSize: "14px"}}>{userData[0].num_reviews} Reviews</div>
+            <div style = {{fontSize: "14px"}}> Average Rating Given:   {userData[0].avg_score} </div>
+            <br />
+
             
 
-          Liked Movies:
 
-          <ImageList cols={3} gap={8}>
-      {posterUrlList.map((posterUrl, index) => (
-        <ImageListItem key={index}>
-          <img
-            src={posterUrl}
-            alt=""
-            loading="lazy"
-          />
-        </ImageListItem>
-      ))}
-    </ImageList>
+          {/* <ImageList cols={3} gap={8} sx={{ maxWidth: '600px' }}>
+  {posterUrlList.map((posterUrl, index) => (
+    <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
+      <ImageListItem key={index}>
+        <img src={posterUrl} alt="" loading="lazy" />
+      </ImageListItem>
+    </NavLink>
+  ))}
+</ImageList> */}
+  
 
 
 
-          {/* <Stack spacing={2}>
+           <Stack spacing={2}>
             {overAvg.map(overAvg => (
               <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
                 <Item>{overAvg.title}</Item>
               </NavLink>
             ))}
-          </Stack> */}
+          </Stack> 
 
           Favorite Movies
           <Stack spacing={2}>
