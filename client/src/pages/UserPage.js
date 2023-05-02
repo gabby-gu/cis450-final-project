@@ -15,6 +15,8 @@ import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import Avatar from '@mui/material/Avatar';
+
 
 
 import Chip from '@mui/material/Chip';
@@ -66,23 +68,20 @@ export default function UserPage() {
   }
   
   return (
+
+    <div style ={{height: '100vh', marginTop: '5%'}}>
+
     <center>
-      <Card sx={{ fontFamily: 'helvetica' , width: '60%', backgroundColor: '#white', color: 'black', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
+      <Card sx={{ overflow: 'visible', fontFamily: 'Poppins Regular' , width: '60%', backgroundColor: '#18141c', color: 'white', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
         <CardContent>
-          <Typography fontSize={42} component="div">
-            {userData[0].username}
-          </Typography>
-          <Typography variant="body2">
-            Ratings Given:   {userData[0].num_reviews}<br/>
-          </Typography>
-          <Typography variant="body2">
-            Average Rating Given:   {userData[0].avg_score}<br/>
-            Likes:
-            <Chip label="Action" />
-            <Chip label="Comedy" />
-            <Chip label="Rom Com" />
-            <Chip label="Animation" />
-          </Typography>
+          
+           <Avatar sx={{ width: 120, height: 120, marginTop: '-60px'}}></Avatar>
+
+             <p style = {{fontSize: "40px"}}> {userData[0].username} </p>
+
+            <p style = {{fontSize: "14px"}}>{userData[0].num_reviews} Reviews</p>
+            <p style = {{fontSize: "14px"}}>Average Rating Given:   {userData[0].avg_score}<br/> </p>
+            
           <Stack spacing={2}>
             {overAvg.map(overAvg => (
               <a href={`/movie/${overAvg.type}${overAvg.movie_id}`} style = {{textDecoration: 'none'}}>
@@ -105,7 +104,7 @@ export default function UserPage() {
 
     </center>
 
-
+</div>
   )
       
 }
