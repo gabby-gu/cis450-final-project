@@ -37,10 +37,15 @@ export default function HomePage() {
   }
 
   const columns = [
-  { field: 'userId', headerName: 'User ID', width: 150 },
+  { field: 'userId', headerName: 'User ID', width: 150, renderCell: (params) => (
+    <NavLink to={`/user/${params.value}`}>
+      {params.value}
+    </NavLink>
+  ) },
   { field: 'tag', headerName: 'Tag', width: 150 },
   { field: 'avgRating', headerName: 'Average Rating', width: 200 },
 ];
+
 
 const rows = [
   ...threeUsersThreeGenres.map((row, index) => ({
@@ -105,7 +110,7 @@ const rows = [
   
 
    <div>
-      <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Average User Rating by Genre : </h2>
+      <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Genre Choices by Top Reviewers : </h2>
       <div style={{ height: 400, width: '100%' }}>
         <DataGrid rows={rows} columns={columns} pageSize={5} />
       </div>

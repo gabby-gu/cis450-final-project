@@ -81,7 +81,7 @@ Liked By:
         
                 <a href={`/user/${user.user_id}`} style = {{textDecoration: 'none'}}>
                     <Chip
-                        avatar={<Avatar>{user.user_id.charAt(0)}</Avatar>}
+                        avatar={<Avatar>{user.user_id[0]}</Avatar>}
                         style={{ backgroundColor: 'black', color: 'white' }}
                         label={user.user_id}
                     />
