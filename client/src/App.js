@@ -8,7 +8,6 @@ import './App.css';
 
 import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
-import AlbumsPage from './pages/AlbumsPage';
 import SearchPage from './pages/SearchPage';
 import MovieInfoPage from './pages/MovieInfoPage';
 import UserPage from './pages/UserPage';

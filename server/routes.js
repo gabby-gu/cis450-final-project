@@ -170,8 +170,8 @@ const search = async function(req, res) {
 
   const inputQuery = `
   SELECT * FROM Movies_letterboxd
-ORDER BY RAND()
-LIMIT 10;
+  ORDER BY RAND()
+  LIMIT 10;
     `;
 
   connection.query(inputQuery, (err, data) => {
