@@ -258,7 +258,7 @@ const returnSearch = async function(req, res) {
     SELECT DISTINCT movie_id, title, image_url, release_date, type
     FROM combined
     WHERE release_date > '${date_lower}' AND release_date < '${date_upper}'
-    order by priority desc
+    order by priority desc;
   `;
 
   connection.query(inputQuery, (err, data) => {
