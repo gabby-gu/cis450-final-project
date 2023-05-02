@@ -102,7 +102,6 @@ const rows = [
 
   <Divider style={{ marginTop: "50px", marginBottom: "20px" }} />
 
-<<<<<<< HEAD
   
 
    <div>
@@ -112,20 +111,6 @@ const rows = [
       </div>
     </div>
     <Divider style={{ marginTop: "70px", marginBottom: "20px" }} />
-=======
-  <div>
-    <h2 style={{ color: 'black', fontFamily: "Poppins Light", fontSize: "40px" }}>Genre Choices by Top Reviewers: </h2>
-    <ul>
-      {threeUsersThreeGenres.map((item) => (
-        <li key={item.user_id}>
-          <NavLink to={`/user/${item.user_id}`}>
-            {item.user_id} - {item.tag} - {item.avg_rating_of_genre}
-          </NavLink>
-        </li>
-      ))}
-    </ul>
-  </div>
->>>>>>> 5876562509c953aed1f978e3f2111022922bfc27
 
 </Container>
 
