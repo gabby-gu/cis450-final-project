@@ -139,19 +139,18 @@ const search = async function(req, res) {
   */
 
   const inputQuery = `
-  with allmovies as (
+  SELECT if(lbtags.tag IS NOT NULL, lbtags.tag, mltags.tag) as tag
+FROM (
     SELECT tag, COUNT(Ml.movie_id) as num_movies
-    FROM Tags_Letterboxd, Movies_letterboxd Ml
-    WHERE Tags_Letterboxd.movie_id = Ml.movie_id
-    GROUP BY (tag)
-    UNION ALL
+    FROM Tags_Letterboxd
+    JOIN Movies_letterboxd Ml on Tags_Letterboxd.movie_id = Ml.movie_id
+    GROUP BY tag) lbtags
+RIGHT OUTER JOIN (
     SELECT tag, COUNT(Mm.movie_id) as num_movies
-    FROM Tags_Movielens, Movies_movielens Mm
-    WHERE Mm.movie_id = Tags_Movielens.movie_id
-    GROUP BY (tag))
-    select tag
-    from allmovies
-    group by tag
+    FROM Tags_Movielens
+    JOIN Movies_movielens Mm on Tags_Movielens.movie_id = Mm.movie_id
+    GROUP BY tag) mltags ON lbtags.tag = mltags.tag
+ORDER BY  if(lbtags.tag IS NOT NULL, lbtags.num_movies + mltags.num_movies, mltags.num_movies) desc
     `;
 
   connection.query(inputQuery, (err, data) => {
