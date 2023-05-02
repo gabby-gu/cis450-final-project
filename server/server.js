@@ -16,12 +16,6 @@ app.get('/search/result', routes.returnSearch);
 app.get('/movie/:movie_id', routes.movie);
 //app.get('/movie/:username', routes.movieByUser);
 app.get('/user/:username', routes.user);
-// app.get('/album/:album_id', routes.album);
-// app.get('/albums', routes.albums);
-// app.get('/album_songs/:album_id', routes.album_songs);
-// app.get('/top_songs', routes.top_songs);
-// app.get('/top_albums', routes.top_albums);
-// app.get('/search_songs', routes.search_songs);
 
 app.listen(config.server_port, () => {
   console.log(`Server running at http://${config.server_host}:${config.server_port}`)
