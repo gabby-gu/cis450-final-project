@@ -45,7 +45,7 @@ export default function MovieInfoPage() {
 
   return (
 
-    <div style ={{height: '100vh', marginTop: '5%'}}>
+    <div style ={{marginTop: '5%'}}>
     <Card sx={{ marginBottom: '50px', borderRadius: '10px', overflow: 'visible', margin: '0 auto', width: '60%', backgroundColor: '#18141c', color: 'white', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
       
         <CardContent>
@@ -71,7 +71,7 @@ export default function MovieInfoPage() {
             <p style={{ fontFamily: 'Poppins Regular', fontSize: '14px', lineHeight: 1.8, margin: 0, marginLeft: 0}}> 
 
 <br/>
-Recently Reviewed By: 
+Liked By: 
 
 </p>
 <Stack direction="column" spacing={1} style = {{marginTop: '10px'}}>
@@ -81,6 +81,7 @@ Recently Reviewed By:
         
                 <a href={`/user/${user.user_id}`} style = {{textDecoration: 'none'}}>
                     <Chip
+                        avatar={<Avatar>{user.user_id.charAt(0)}</Avatar>}
                         style={{ backgroundColor: 'black', color: 'white' }}
                         label={user.user_id}
                     />
