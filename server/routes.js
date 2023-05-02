@@ -214,7 +214,12 @@ const returnSearch = async function(req, res) {
   ● Case 4: If the route parameter is defined but does not match cases 1 or 2 or 3:
   ○ Return “‘[type]’ is not a valid author type.
   */
+  const today = new Date();
+  var stdDate = timeConverter(today.setFullYear( today.getFullYear() - 2 ));
+  var stdDateYearBefore = timeConverter(today.setFullYear( today.getFullYear() - 1 ));
+
   const keyword = req.query.keyword ?? '';
+
 
   // TODO: have to think about how to incorporate this parameters to query
   const timestamp_upper = req.query.timestamp_upper ?? today; // add query parameter for this 
@@ -230,31 +235,30 @@ const returnSearch = async function(req, res) {
     SELECT movie_id, title, image_url, release_date, priority, type FROM
         (SELECT *, 2 as priority
         FROM Movies_letterboxd
-        WHERE title LIKE '% ${keyword} %'
+        WHERE title LIKE '%${keyword}%' OR movie_id LIKE '%${keyword}%'
         UNION
         SELECT *, 1 as priority
         FROM Movies_letterboxd
-        WHERE overview LIKE '% ${keyword} %') as mvlb
-    JOIN (SELECT movie_id, tag FROM Tags_letterboxd) LBT USING (movie_id)
+        WHERE overview LIKE '%${keyword}%') as mvlb
+    JOIN (SELECT movie_id, tag FROM Tags_Letterboxd) LBT USING (movie_id)
         WHERE tag LIKE '%${tag}%'
     UNION ALL
     SELECT movie_id, title, image_url, release_date, priority, type from
         (SELECT *
         FROM (SELECT *, 2 as priority
             FROM Movies_movielens
-            WHERE title LIKE '% ${keyword} %'
+            WHERE title LIKE '%${keyword}%'
             UNION
             SELECT *, 1 as priority
             FROM Movies_movielens
-            WHERE overview LIKE '% ${keyword} %') as mvml
-      JOIN (SELECT movie_id, tag FROM Tags_movielens) MT USING (movie_id)
+            WHERE overview LIKE '%${keyword}%') as mvml
+      JOIN (SELECT movie_id, tag FROM Tags_Movielens) MT USING (movie_id)
         WHERE tag LIKE '%${tag}%') ml
     )
-    SELECT movie_id, title, image_url, release_date, type
+    SELECT DISTINCT movie_id, title, image_url, release_date, type
     FROM combined
     WHERE release_date > '${date_lower}' AND release_date < '${date_upper}'
     order by priority desc
-    LIMIT 20
   `;
 
   connection.query(inputQuery, (err, data) => {
