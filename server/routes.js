@@ -45,8 +45,7 @@ const home = async function(req, res) {
 
   const today = new Date();
   let ind = tags[Math.floor(Math.random() * tags.length)];
-  var stdDate = timeConverter(today.setFullYear( today.getFullYear() - 2 ));
-  var stdDateYearBefore = timeConverter(today.setFullYear( today.getFullYear() - 1 ));
+  var stdDate = timeConverter(today.setFullYear( today.getFullYear() - 3 ));
 
   // Here is a complete example of how to query the database in JavaScript.
   // Only a small change (unrelated to querying) is required for TASK 3 in this route.
@@ -57,7 +56,7 @@ const home = async function(req, res) {
   JOIN (SELECT movie_id, avg(rating_val) as rating
       FROM Ratings_movielens
       group by movie_id) rml using (movie_id)
-  WHERE tag LIKE '%${ind}%'
+  WHERE tag = '${ind}'
   ORDER BY rating
   LIMIT 5`;
 
@@ -65,25 +64,13 @@ const home = async function(req, res) {
   with movies as
   (SELECT *, avg(rating_val) as avg
   FROM (SELECT * FROM Movies_letterboxd 
-        WHERE release_date LIKE '%${stdDate}%') mv
+        WHERE release_date = '${stdDate}') mv
   JOIN Ratings_letterboxd using (movie_id)
   GROUP BY movie_id)
   SELECT movie_id, title, image_url, avg, release_date
   FROM movies
   ORDER BY release_date, avg
   LIMIT 3`;
-
-  /*const mostReviewsQuery = ` 
-  SELECT *
-  FROM
-    (SELECT *
-    FROM Movie_movielens
-    UNION ALL
-    SELECT * 
-    FROM Movie_letterboxd) as allmovies
-  WHERE release_date < '%${stdDate}%'
-  ORDER BY release_date
-  LIMIT 5`;*/
 
   const threeUsersThreeGenresQuery = `
   WITH randReviewers AS (
@@ -112,7 +99,6 @@ const home = async function(req, res) {
 
   
   // Multiple queries for Homepage
-  // TODO: Change
   Promise.all([
     conn.queryAsync(defaultQuery),
     conn.queryAsync(sortReleaseDateQuery),
@@ -137,21 +123,6 @@ const home = async function(req, res) {
     console.log(err);
     res.json({});
   });
-
-  // connection.query(defaultQuery, (err, data) => {
-  //   if (err || data.length === 0) {
-  //     // if there is an error for some reason, or if the query is empty (this should not be possible)
-  //     // print the error message and return an empty object instead
-  //     console.log(err);
-  //     res.json({});
-  //   } else {
-  //     // Here, we return results of the query as an object, keeping only relevant data
-  //     // being song_id and title which you will add. In this case, there is only one song
-  //     // so we just directly access the first element of the query results array (data)
-  //     // TODO (TASK 3): also return the song title in the response
-  //     res.json(data);
-  //   }
-  // });
 }
 
 //GET home/search
@@ -293,9 +264,6 @@ const movie = async function(req, res) {
    and all the reviews from letterboxd for that movie(Query #9)
   */
   const movie_id = req.params.movie_id;
-  // const table_name = req.params.table_name; // letterboxd or movielens
-  // Letterboxd movie_id: string
-  // MovieLens movid_id: int
 
   var table = ''
   var ratingTable = ''
@@ -367,7 +335,6 @@ const movie = async function(req, res) {
   }
   
   // Multiple queries for Movie page
-  // TODO: Change
   Promise.all([
     conn.queryAsync(movieinfoQuery),
     conn.queryAsync(userListQuery)
@@ -440,9 +407,6 @@ that the user gave(Query #2)
   FROM info
   JOIN Movies_letterboxd USING (movie_id)
   `;
-
-  // Use promise to return results from multiple queries
-  // https://stackoverflow.com/questions/68804781/how-to-create-multiple-queries-in-a-single-get-request
 
   // Multiple queries for User Page
   Promise.all([

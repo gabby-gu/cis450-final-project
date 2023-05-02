@@ -85,7 +85,9 @@ export default function UserPage() {
           </Typography>
           <Stack spacing={2}>
             {overAvg.map(overAvg => (
-              <Item key={overAvg.movie_id}>{overAvg.title}</Item>
+              <a href={`/movie/${overAvg.type}${overAvg.movie_id}`} style = {{textDecoration: 'none'}}>
+              <Item key={overAvg.movie_id}> {overAvg.title}</Item>
+          </a>
             ))}
           </Stack>
           <Stack spacing={2}>
