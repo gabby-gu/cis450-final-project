@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button, Container, Grid, TextField } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { NavLink } from 'react-router-dom';
-
 import { formatDuration } from '../helpers/formatter';
+
 const config = require('../config.json');
 
 export default function MoviesPage() {
@@ -70,21 +70,41 @@ export default function MoviesPage() {
       <h2 style={{ color: 'white' }}>Search Movies</h2>
       <Grid container spacing={2} alignItems="center">
         <Grid item>
-          <TextField label="Movie Title" variant="outlined" style={{ backgroundColor: 'transparent', borderColor: 'white'  }} value={title} onChange={(event) => setTitle(event.target.value)} InputLabelProps={{ style: { color: 'white' } }} />
+          <TextField
+            label="Movie Title"
+            variant="outlined"
+            style={{ backgroundColor: 'transparent', borderColor: 'white' }}
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            InputLabelProps={{ style: { color: 'white' } }}
+          />
         </Grid>
         <Grid item>
-          <Button variant="contained" color="primary" onClick={search}>Search</Button>
+          <Button variant="contained" color="primary" onClick={search}>
+            Search
+          </Button>
         </Grid>
       </Grid>
       <div style={{ marginTop: 30, marginBottom: 30 }}>
         {tags.map(tag => (
-          <Button key={tag} style={{ margin: 5 }} variant="outlined" onClick={() => handleTagClick(tag)}>
+          <Button
+            key={tag}
+            style={{ margin: 5 }}
+            variant="outlined"
+            onClick={() => handleTagClick(tag)}
+          >
             {tag}
           </Button>
         ))}
       </div>
       <div style={{ height: 400, width: '100%' }}>
-        <DataGrid rows={data} columns={columns} pageSize={pageSize} onPageSizeChange={(newPageSize) => setPageSize(newPageSize)} style={{ backgroundColor: 'transparent' }} />
+        <DataGrid
+          rows={data}
+          columns={columns}
+          pageSize={pageSize}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          style={{ backgroundColor: 'transparent' }}
+        />
       </div>
     </Container>
   );
