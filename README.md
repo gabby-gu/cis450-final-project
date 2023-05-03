@@ -6,7 +6,7 @@ Alex Park, Chelsea Pan, Gabby Gu, Sebin Lee
 ____________
 
 To run CineScore on your computer:
-  1. Download cis450-final-project.zip
+  1. Download cis450-final-project-main.zip
   2. Npm install into both client and server folders
   3. Npm install bluebird into the server folder
   3. Npm start both client and server
