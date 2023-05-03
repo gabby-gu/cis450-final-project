@@ -1,6 +1,8 @@
 # CIS450 Final Project: CineScore
 
 Alex Park, Chelsea Pan, Gabby Gu, Sebin Lee
+
+![image](home.png)
 ____________
 
 To run CineScore on your computer:
