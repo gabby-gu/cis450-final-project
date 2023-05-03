@@ -2,7 +2,7 @@
 
 Alex Park, Chelsea Pan, Gabby Gu, Sebin Lee
 
-![image](home.png)
+![image](homepage.png)
 ____________
 
 To run CineScore on your computer:
