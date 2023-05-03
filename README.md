@@ -8,6 +8,7 @@ ____________
 To run CineScore on your computer:
   1. Download cis450-final-project.zip
   2. Npm install into both client and server folders
+  3. Npm install bluebird into the server folder
   3. Npm start both client and server
   4. View the web page locally at localhost:3000 in your browser
   
