@@ -16,6 +16,7 @@ const organize = (rows) => Object.values(JSON.parse(JSON.stringify(rows)));
 
 function timeConverter(timestamp) {
   var a = new Date(timestamp); //date: unix timestamp
+  // console.log("a: ", a);
   var year = a.getFullYear();
   var month = a.getMonth();
   if (month < 10) {
@@ -32,6 +33,9 @@ function timeConverter(timestamp) {
 
 // GET /home
 const home = async function(req, res) {
+  // you can use a ternary operator to check the value of request query values
+  // which can be particularly useful for setting the default value of queries
+  // note if users do not provide a value for the query it will be undefined, which is falsey
   const explicit = req.query.explicit === 'true' ? 1 : 0;
 
   const tags = ["Foreign", "Crime", "Action", "Science Fiction", "Thriller", 
@@ -86,20 +90,23 @@ const home = async function(req, res) {
     WHERE (SELECT count(*)
           FROM combined
           WHERE avg_rating_of_genre > c.avg_rating_of_genre
-          AND user_id IN (c.user_id)) < 3`;
+          AND c.user_id = user_id) < 3`;
 
   
   // Multiple queries for Homepage
   Promise.all([
     conn.queryAsync(defaultQuery),
     conn.queryAsync(sortReleaseDateQuery),
+    //conn.queryAsync(mostReviewsQuery),
     conn.queryAsync(threeUsersThreeGenresQuery),
   ]).then(function([defaultResults, sortReleaseResults, 
+    //mostReviewsResults, 
     threeUsersThreeGenresResults]
   ) {
     const results = {
       default: organize(defaultResults),
       sortRelease: organize(sortReleaseResults),
+      //mostReviews: organize(mostReviewsResults),
       threeUsersThreeGenres: organize(threeUsersThreeGenresResults)
     };
     console.log("--------------------");
@@ -114,21 +121,31 @@ const home = async function(req, res) {
 }
 
 //GET home/search
+//Home: return tags that user can input for search
 const tags = async function(req, res) {
+  /*
+  Description: look up movie title and summary based on the inputted keyword and return movie information
+  Route Parameter(s): 
+  Query Parameter(s): 
+  Route Handler: author(req, res)
+  Return Type: JSON
+  Expected (Output) behavior: Return all the tags in a descending order
+  of number of reviews each tag have
+  */
 
   const inputQuery = `
   SELECT if(lbtags.tag IS NOT NULL, lbtags.tag, mltags.tag) as tag
-  FROM (
-      SELECT tag, COUNT(Ml.movie_id) as num_movies
-      FROM Tags_Letterboxd
-      JOIN Movies_letterboxd Ml on Tags_Letterboxd.movie_id = Ml.movie_id
-      GROUP BY tag) lbtags
-  RIGHT OUTER JOIN (
-      SELECT tag, COUNT(Mm.movie_id) as num_movies
-      FROM Tags_Movielens
-      JOIN Movies_movielens Mm on Tags_Movielens.movie_id = Mm.movie_id
-      GROUP BY tag) mltags ON lbtags.tag = mltags.tag
-  ORDER BY  if(lbtags.tag IS NOT NULL, lbtags.num_movies + mltags.num_movies, mltags.num_movies) desc
+FROM (
+    SELECT tag, COUNT(Ml.movie_id) as num_movies
+    FROM Tags_Letterboxd
+    JOIN Movies_letterboxd Ml on Tags_Letterboxd.movie_id = Ml.movie_id
+    GROUP BY tag) lbtags
+RIGHT OUTER JOIN (
+    SELECT tag, COUNT(Mm.movie_id) as num_movies
+    FROM Tags_Movielens
+    JOIN Movies_movielens Mm on Tags_Movielens.movie_id = Mm.movie_id
+    GROUP BY tag) mltags ON lbtags.tag = mltags.tag
+ORDER BY  if(lbtags.tag IS NOT NULL, lbtags.num_movies + mltags.num_movies, mltags.num_movies) desc
     `;
 
   connection.query(inputQuery, (err, data) => {
@@ -143,11 +160,18 @@ const tags = async function(req, res) {
 }
 
 const search = async function(req, res) {
+  /*
+  Description: outputs 10 random movies from letterboxd
+  Route Parameter(s): 
+  Query Parameter(s): 
+  Route Handler: author(req, res)
+  Return Type: JSON
+  */
 
   const inputQuery = `
   SELECT * FROM Movies_letterboxd
-  ORDER BY RAND()
-  LIMIT 10;
+ORDER BY RAND()
+LIMIT 10;
     `;
 
   connection.query(inputQuery, (err, data) => {
@@ -164,11 +188,39 @@ const search = async function(req, res) {
 
 
 //GET home/search/result
+//Home: return movies matching the search parameter
 const returnSearch = async function(req, res) {
+  /*
+  Description: look up movie title and summary based on the inputted keyword and return movie information
+  Route Parameter(s): type(string)
+  Query Parameter(s): type(string)
+  Route Handler: author(req, res)
+  Return Type: JSON
+  Expected (Output) behavior:
+  ● Case 1: If the route parameter (type)=’keyword’’
+  ○ Return the JSON formatted movie information that has a matching title or summary with inputted keyword
+  ● Case 2: If the route parameter(type)= ‘date’
+  ○ Return the JSON formatted movie information that has a matching release date 
+  ● Case 3: If the route parameter(type)= ‘tag’
+  ○ Return Return the JSON formatted movie information that has a matching tag using Query #3
+  ● Case 4: If the route parameter is defined but does not match cases 1 or 2 or 3:
+  ○ Return “‘[type]’ is not a valid author type.
+  */
   const today = new Date();
+  var stdDate = timeConverter(today.setFullYear( today.getFullYear() - 2 ));
+  var stdDateYearBefore = timeConverter(today.setFullYear( today.getFullYear() - 1 ));
 
   const keyword = req.query.keyword ?? '';
-  const tag = req.query.tag ?? ''; 
+
+
+  // TODO: have to think about how to incorporate this parameters to query
+  const timestamp_upper = req.query.timestamp_upper ?? today; // add query parameter for this 
+  const timestamp_lower = req.query.timestamp_lower ?? 0; // add query parameter for this 
+  const tag = req.query.tag ?? ''; // add query parameter for this
+
+  // Unix timestamp to date
+  const date_upper = timeConverter(timestamp_upper);
+  const date_lower = timeConverter(timestamp_lower);
 
   const inputQuery = `
   WITH lb as (
@@ -191,6 +243,7 @@ const returnSearch = async function(req, res) {
            if(lb.priority IS NOT NULL AND ml.priority IS NOT NULL, lb.priority+ml.priority, if(lb.priority IS NULL, ml.priority, lb.priority)) as priority
     FROM lb LEFT OUTER JOIN ml on lb.imdb_id = ml.imdb_id)
     SELECT * FROM combined
+    WHERE release_date  > '${date_lower}' AND release_date < '${date_upper}'
     order by priority desc;
   `;
 
@@ -200,7 +253,7 @@ const returnSearch = async function(req, res) {
       res.json({});
     } else if ((keyword == '' & date_lower > date_upper)) {
       console.log("invalid search parameter")
-      res.json({}); 
+      res.json({}); //will have to fix this later
     } 
     else {
       res.json(data);
@@ -208,8 +261,23 @@ const returnSearch = async function(req, res) {
   });
 }
 
+
+// fix: retrieve users that reviewed the movie -> can lead to user pages
+// avg rating
+
 //GET movie/movie_id
+//MOVIE PAGE : get movie based on ID
 const movie = async function(req, res) {
+  /*
+  Route: GET /movie/:movie_id
+  Description: return all relevant movie information and reviews for that movie
+  Route Parameter(s): movie_id(string)
+  Query Parameter(s): None
+  Route Handler: author(req, res)
+  Return Type: JSON
+  Expected (Output) behavior: Return the JSON formatted movie information of the given movie_id(Query #7)
+   and all the reviews from letterboxd for that movie(Query #9)
+  */
   const movie_id = req.params.movie_id;
 
   var table = ''
@@ -301,8 +369,20 @@ const movie = async function(req, res) {
 }
 
 
-// GET /user/:username
+// GET /user/:user_id
+//user PAGE : get movie based on user_id
 const user = async function(req, res) {
+  /*
+Route: GET /user/:user_id
+Description: show the user information with given user_id
+Route Parameter(s): user_id(String)
+Query Parameter(s): user_id(String)
+Route Handler: author(req, res)
+Return Type: JSON
+Expected (Output) behavior: Return all the user information(Query #1) , 
+reviews that the user wrote, and the avg score of all the reviews 
+that the user gave(Query #2) 
+  */
   const username = req.params.username;
 
   // retrieve username, number of reviews, average score

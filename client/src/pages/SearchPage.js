@@ -12,6 +12,7 @@ export default function MoviesPage() {
   const [title, setTitle] = useState('');
   const [tags, setTags] = useState([]);
 
+// get the data from the query
   const loadData = (url) => {
     fetch(url)
       .then(res => res.json())
@@ -20,6 +21,8 @@ export default function MoviesPage() {
         setData(moviesWithId);
       });
   }
+
+// get the tag and search query results and store them
 
   useEffect(() => {
     loadData(`http://${config.server_host}:${config.server_port}/search`);
@@ -30,13 +33,19 @@ export default function MoviesPage() {
       });
   }, []);
 
+  // acount for special characters that break URLs:
   const search = () => {
-    loadData(`http://${config.server_host}:${config.server_port}/search/result?keyword=${title}`);
-  }
+  const encodedTitle = encodeURIComponent(title.replace('#', '%23'));
+  loadData(`http://${config.server_host}:${config.server_port}/search/result?keyword=${encodedTitle}`);
+}
+
+
+// when you click on a tag, gets the data from the search query output with the tag as keyword
 
   const handleTagClick = (tag) => {
     loadData(`http://${config.server_host}:${config.server_port}/search/result?keyword=${tag}`);
   }
+
 
   const columns = [
     { 
