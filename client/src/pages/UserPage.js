@@ -65,7 +65,7 @@ export default function UserPage() {
         setOverAvg(resJson.overAvg);
         setPerTag(resJson.perTagMovies);
 
-        // fetch all the poster URLs for the movies in the overAvg array
+      // fetch all the poster URLs for the movies in the overAvg array
       const posterUrls = [];
       const api_key = 'afeb2e4f';
       for (const movie of resJson.overAvg) {
@@ -87,49 +87,38 @@ export default function UserPage() {
     });
   }, [user_id, isAllNumbers]);
   
+  //displays an error page if we are looking up a movielens user
   if (isAllNumbers) {
     return <div>ERROR!! This movie is from Movielens database and does not contain any user info!</div>;
   }
   
   return (
 
-     <div style ={{marginTop: '5%'}}>
+    <div style ={{marginTop: '5%'}}>
 
     <center>
+
       <Card sx={{ overflow: 'visible', fontFamily: 'Poppins Regular' , width: '60%', backgroundColor: '#18141c', color: 'white', boxShadow: '0px 0px 5px 0px rgba(0,0,0,0.75)'}}>
         <CardContent>
           
-           <Avatar sx={{ width: 120, height: 120, marginTop: '-60px'}}></Avatar>
+          <Avatar sx={{ width: 120, height: 120, marginTop: '-60px'}}></Avatar>
 
             <div style = {{fontSize: "40px"}}> {userData[0].username} </div>
-
             <div style = {{fontSize: "14px"}}>{userData[0].num_reviews} Reviews</div>
             <div style = {{fontSize: "14px"}}> Average Rating Given:   {userData[0].avg_score} </div>
             <br />
 
-            
-
-
+          {/* three movie posters from overavg */}
           <ImageList cols={3} gap={8} sx={{ maxWidth: '600px' }}>
-  {posterUrlList.map((posterUrl, index) => (
-    <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
-      <ImageListItem key={index}>
-        <img src={posterUrl} alt="" loading="lazy" />
-      </ImageListItem>
-    </NavLink>
-  ))}
-</ImageList>
-  
-
-
-{/* 
-           <Stack spacing={2}>
-            {overAvg.map(overAvg => (
+            {posterUrlList.map((posterUrl, index) => (
               <NavLink to={`/movie/${overAvg.type}${overAvg.movie_id}`} key={overAvg.movie_id} style={{textDecoration: 'none'}}>
-                <Item>{overAvg.title}</Item>
+                <ImageListItem key={index}>
+                  <img src={posterUrl} alt="" loading="lazy" />
+                </ImageListItem>
               </NavLink>
-            ))}
-          </Stack>  */}
+             ))}
+          </ImageList>
+  
 
           <Stack spacing={2}>
             {perTagMovies.map(perTagMovies => (
@@ -139,11 +128,8 @@ export default function UserPage() {
     
         </CardContent>
       
-    </Card>
+      </Card>
        
-    
-
-
     </center>
 
  </div>
